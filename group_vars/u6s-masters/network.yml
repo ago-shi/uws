@@ -1,0 +1,4 @@
+# ファイル格納場所の定義
+01-netcfg_yaml:
+  - src: "group_files/u6s-masters/01-netcfg.yaml.j2"
+    dest: "/etc/netplan/01-netcfg.yaml"

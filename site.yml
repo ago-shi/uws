@@ -1,0 +1,2 @@
+---
+- import_playbook: u6s-cluster.yml

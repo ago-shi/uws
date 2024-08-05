@@ -1,0 +1,3 @@
+---
+- import_playbook: u6s-masters.yml
+- import_playbook: u6s-workers.yml

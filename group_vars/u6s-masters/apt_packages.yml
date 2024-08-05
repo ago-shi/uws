@@ -1,0 +1,5 @@
+apt_basic_packages: 
+  - name: ntp
+    state: present
+  - name: netplan.io
+    state: present

@@ -1,0 +1,6 @@
+---
+- name: Deploy kubernetes controle plain for u6s
+  hosts: u6s-masters
+  roles:
+    - ubuntu_basic_setup
+    - ubuntu_k8s_setup

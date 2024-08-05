@@ -1,0 +1,28 @@
+---
+# 基本パッケージのインストール
+# タイムゾーン設定
+# 時刻同期設定
+# ネットワーク設定
+
+- name: install basic packages
+  ansible.builtin.apt: 
+    name: "{{ item.name }}"
+    state: "{{ item.present }}"
+  loop: "{{ apt_basic_packages }}"
+
+- name: timezone setup to "{{ datetime_timezone }}"
+  community.general.timezone:
+    name: "{{ datetime_timezone }}"
+
+- name: configure timesyncd
+  ansible.builtin.template:
+    src: "{{ timesyncd_conf.src }}"
+    dest: "{{ timesyncd_conf.dest }}"
+  notify: Restart timesyncd service
+
+- name: configre network (transfer netplan file)
+  ansible.builtin.template:
+    src: "{{ 01-netcfg_yaml.src }}"
+    dest: "{{ 01-netcfg_yaml.dest }}"
+  notify: netplan apply
+
