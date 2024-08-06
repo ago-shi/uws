@@ -35,13 +35,11 @@
     path: "{{ netplanPath }}{{ item }}"
   register: file_stat
   loop: "{{ nwCurrentFiles }}"
-  ignore_error: true
 
 - name: Rename netplanfile
-  ansible.builtin.file:
-    src: "{{ netplanPath }}{{ item.item }}"
-    dest: "{{ netplanPath }}{{ item.item }}.org"
-    state: link
+  ansible.builtin.command: mv "{{ netplanPath }}{{ item.item }}" "{{ netplanPath }}{{ item.item }}.org"
+  when: item.stat.exists
+  loop: "{{ file_stat.results }}"
 
 - name: configure network (transfer netplan file)
   ansible.builtin.template:
