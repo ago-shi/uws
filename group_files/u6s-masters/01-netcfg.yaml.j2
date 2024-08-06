@@ -6,7 +6,7 @@ network:
         - {{ ansible_host }}/24
       routes:
         - to: default
-          via: 192.168.1.1
+          via: {{ hostvars['router01']['ansible_host'] }}
           metric: 100
       nameservers:
         addresses: 

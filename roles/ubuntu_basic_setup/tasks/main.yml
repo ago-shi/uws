@@ -1,8 +1,14 @@
 ---
+# aptキャッシュupdate & upgrade
 # 基本パッケージのインストール
 # タイムゾーン設定
 # 時刻同期設定
 # ネットワーク設定
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: full
 
 - name: install basic packages
   ansible.builtin.apt: 
