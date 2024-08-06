@@ -1,5 +1,6 @@
+---
 apt_basic_packages: 
-  - name: ntp
+  - name: chrony
     state: present
   - name: netplan.io
     state: present

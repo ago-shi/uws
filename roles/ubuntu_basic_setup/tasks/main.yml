@@ -9,34 +9,46 @@
   ansible.builtin.apt:
     update_cache: true
     upgrade: full
+    purge: true
 
 - name: install basic packages
   ansible.builtin.apt: 
     name: "{{ item.name }}"
     state: "{{ item.state }}"
-    update_cache: true
   loop: "{{ apt_basic_packages }}"
 
 - name: timezone setup to "{{ datetime_timezone }}"
   community.general.timezone:
     name: "{{ datetime_timezone }}"
 
-- name: configure timesyncd
+- name: configure Chrony
   ansible.builtin.template:
-    src: "{{ timesyncd_conf.src }}{{ timesyncd_conf.file }}.j2"
-    dest: "{{ timesyncd_conf.dest }}{{ timesyncd_conf.file }}"
-    owner: "{{ timesyncd_conf.owner }}"
-    group: "{{ timesyncd_conf.group }}"
-    mode: "{{ timesyncd_conf.mode }}"
-  notify: Restart timesyncd service
+    src: "{{ chrony_conf.src }}{{ chrony_conf.file }}.j2"
+    dest: "{{ chrony_conf.dest }}{{ chrony_conf.file }}"
+    owner: "{{ chrony_conf.owner }}"
+    group: "{{ chrony_conf.group }}"
+    mode: "{{ chrony_conf.mode }}"
+  notify: Restart chrony service
 
-- name: configre network (transfer netplan file)
+- name: configure network (check currnet netplan filename)
+  ansible.builtin.stat:
+    path: "{{ netplanPath }}{{ item }}"
+  register: file_stat
+  loop: "{{ nwCurrentFiles }}"
+  ignore_error: true
+
+- name: Rename netplanfile
+  ansible.builtin.file:
+    src: "{{ netplanPath }}{{ item.item }}"
+    dest: "{{ netplanPath }}{{ item.item }}.org"
+    state: link
+
+- name: configure network (transfer netplan file)
   ansible.builtin.template:
     src: "{{ item.src }}{{ item.file }}.j2"
     dest: "{{ item.dest }}{{ item.file }}"
     owner: "{{ item.owner }}"
     group: "{{ item.group }}"
     mode: "{{ item.mode }}"
-  loop: "{{ netplan_yaml }}"
+  loop: "{{ netplan }}"
   notify: netplan apply
-

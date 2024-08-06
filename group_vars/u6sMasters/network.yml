@@ -1,8 +1,14 @@
+---
 # ファイル格納場所の定義
-netplan_yaml:
+netplanPath: "/etc/netplan/"
+
+netplan:
   - file: "01-netcfg.yaml"
     src: "group_files/u6s-masters/"
-    dest: "/etc/netplan/"
+    dest: "{{ netplanPath }}"
     owner: "root"
     group: "root"
     mode: '0600'
+
+nwCurrentFiles:
+  - "50-cloud-init.yaml"

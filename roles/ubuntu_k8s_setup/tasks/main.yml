@@ -1,0 +1,6 @@
+---
+- name: kernel module setup for k8s
+  community.general.modprobe:
+    name: "{{ item.module }}"
+    state: "{{ item.state }}"
+  loop: "{{ k8s_kernel_modules }}"

@@ -1,0 +1,6 @@
+---
+k8s_kernel_modules: 
+  - module: overlay
+    state: present
+  - module: br_netfilter
+    state: present
