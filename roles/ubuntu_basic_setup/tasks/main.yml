@@ -7,7 +7,8 @@
 - name: install basic packages
   ansible.builtin.apt: 
     name: "{{ item.name }}"
-    state: "{{ item.present }}"
+    state: "{{ item.state }}"
+    update_cache: true
   loop: "{{ apt_basic_packages }}"
 
 - name: timezone setup to "{{ datetime_timezone }}"
@@ -16,13 +17,20 @@
 
 - name: configure timesyncd
   ansible.builtin.template:
-    src: "{{ timesyncd_conf.src }}"
-    dest: "{{ timesyncd_conf.dest }}"
+    src: "{{ timesyncd_conf.src }}{{ timesyncd_conf.file }}.j2"
+    dest: "{{ timesyncd_conf.dest }}{{ timesyncd_conf.file }}"
+    owner: "{{ timesyncd_conf.owner }}"
+    group: "{{ timesyncd_conf.group }}"
+    mode: "{{ timesyncd_conf.mode }}"
   notify: Restart timesyncd service
 
 - name: configre network (transfer netplan file)
   ansible.builtin.template:
-    src: "{{ 01-netcfg_yaml.src }}"
-    dest: "{{ 01-netcfg_yaml.dest }}"
+    src: "{{ item.src }}{{ item.file }}.j2"
+    dest: "{{ item.dest }}{{ item.file }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop: "{{ netplan_yaml }}"
   notify: netplan apply
 

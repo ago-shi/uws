@@ -1,0 +1,8 @@
+# ファイル格納場所の定義
+netplan_yaml:
+  - file: "01-netcfg.yaml"
+    src: "group_files/u6s-masters/"
+    dest: "/etc/netplan/"
+    owner: "root"
+    group: "root"
+    mode: '0600'

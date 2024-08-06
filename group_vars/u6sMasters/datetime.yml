@@ -1,0 +1,11 @@
+---
+datetime_timezone: "Asia/Tokyo"
+
+# ファイル格納場所の定義
+timesyncd_conf:
+  file: "timesyncd.conf"
+  src: "group_files/u6s-masters/"
+  dest: "/etc/systemd/"
+  owner: "root"
+  group: "root"
+  mode: '0644'
