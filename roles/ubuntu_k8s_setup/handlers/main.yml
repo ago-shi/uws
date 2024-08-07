@@ -1,10 +1,6 @@
 ---
 - name: sysctl --system
-  ansible.posix.sysctl:
-    sysctl_file: "{{ item.dest }}{{ item.file }}"
-    state: present
-    reload: true
-  loop: "{{ sysctld }}"
+  ansible.builtin.command: sysctl --system
 
 - name: u6s-master system reboot
   ansible.builtin.reboot:
