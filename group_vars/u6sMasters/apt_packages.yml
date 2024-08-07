@@ -4,3 +4,15 @@ apt_basic_packages:
     state: present
   - name: netplan.io
     state: present
+
+apt_k8s_packages:
+  containerRuntime: 
+    name: containerd
+    state: present
+  kubeXXX: 
+    - name: kubeadm
+      state: present
+    - name: kubectl
+      state: present
+    - name: kubelet
+      state: present 

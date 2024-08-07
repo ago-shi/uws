@@ -34,7 +34,7 @@
   ansible.builtin.stat:
     path: "{{ netplanPath }}{{ item }}"
   register: file_stat
-  loop: "{{ nwCurrentFiles }}"
+  loop: "{{ nwBuiltinFiles }}"
 
 - name: Rename netplanfile
   ansible.builtin.command: mv "{{ netplanPath }}{{ item.item }}" "{{ netplanPath }}{{ item.item }}.org"

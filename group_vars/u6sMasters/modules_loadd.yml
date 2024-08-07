@@ -2,7 +2,7 @@
 # ファイル格納場所
 modules_loadd:
   - file: "k8s.conf"
-    src: "group_files/u6s-masters/"
+    src: "group_files/u6s-masters/modules_"
     dest: "/etc/modules-load.d/"
     owner: "root"
     group: "root"

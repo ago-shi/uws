@@ -7,7 +7,7 @@ ntpServers:
 
 # ファイル格納場所の定義
 chrony_conf:
-  file: "timesyncd.conf"
+  file: "chrony.conf"
   src: "group_files/u6s-masters/"
   dest: "/etc/chrony/"
   owner: "root"

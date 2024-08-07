@@ -10,5 +10,5 @@ netplan:
     group: "root"
     mode: '0600'
 
-nwCurrentFiles:
+nwBuiltinFiles:
   - "50-cloud-init.yaml"

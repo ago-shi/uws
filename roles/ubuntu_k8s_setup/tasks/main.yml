@@ -1,6 +1,68 @@
 ---
+- name: configure k8s module file
+  ansible.builtin.template: 
+    src: "{{ item.src }}{{ item.file }}.j2"
+    dest: "{{ item.dest }}{{ item.file }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop: "{{ modules_loadd }}"
+
 - name: kernel module setup for k8s
   community.general.modprobe:
     name: "{{ item.module }}"
     state: "{{ item.state }}"
   loop: "{{ k8s_kernel_modules }}"
+
+- name: configure k8s module file
+  ansible.builtin.template: 
+    src: "{{ item.src }}{{ item.file }}.j2"
+    dest: "{{ item.dest }}{{ item.file }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop: "{{ sysctld }}"
+  notify: sysctl --system
+
+- name: check swap status
+  ansible.builtin.command: swapon -s
+  register: swap_check
+  failed_when: false
+  changed_when: false
+
+- name: swap off
+  ansible.builtin.command: swapoff -a
+  when: swap_check.stdout
+
+- name: unmount swap entry
+  ansible.posix.mount:
+    path: "{{ mountPoint.k8s.path }}"
+    state: "{{ mountPoint.k8s.state }}"
+
+- name: check swap file
+  ansible.builtin.stat:
+    path:  "{{ mountPoint.k8s.path }}"
+  register: file_stat
+
+- name: remove swap file
+  ansible.builtin.file:
+    path: "{{ mountPoint.k8s.path }}"
+    state: absent
+  when: file_stat.state.exists
+
+- name: configure fstab
+  ansible.builtin.template:
+    src: "{{ fstabFile.src }}{{ fstabFile.file }}.j2"
+    dest: "{{ fstabFile.dest }}{{ fstabFile.file }}"
+    owner: "{{ fstabFile.owner }}"
+    group: "{{ fstabFile.group }}"
+    mode: "{{ fstabFile.mode }}"
+  notify: u6s-master system reboot
+
+- name: configure /etc/hosts
+  ansible.builtin.template:
+    src: "{{ etcHosts.src }}{{ etcHosts.file }}.j2"
+    dest: "{{ etcHosts.dest }}{{ etcHosts.file }}"
+    owner: "{{ etcHosts.owner }}"
+    group: "{{ etcHosts.group }}"
+    mode: "{{ etcHosts.mode }}"

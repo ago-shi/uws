@@ -1,0 +1,15 @@
+---
+mountPoint:
+  k8s:
+    path: "/swap.img"
+    state: "unmounted"
+
+
+# ファイル仕様
+fstabFile:
+  file: "fstab"
+  src: "group_files/u6s-masters/"
+  dest: "/etc/"
+  owner: "root"
+  group: "root"
+  mode: '0644'

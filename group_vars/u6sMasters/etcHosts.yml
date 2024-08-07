@@ -1,0 +1,8 @@
+---
+etcHosts:
+  file: "hosts"
+  src: "group_files/u6s-masters/"
+  dest: "/etc/"
+  owner: "root"
+  group: "root"
+  mode: '0644'
