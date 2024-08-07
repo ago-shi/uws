@@ -15,11 +15,11 @@ ff02::2 ip6-allrouters
 
 # k8s cluster entry
 ## u6s-master nodes
-{% for host in groups['u6sMaseters'] %}
+{% for host in groups['u6sMasters'] %}
 {{ hostvars[host]['ansible_host'] }} {{ host }}
 {% endfor %}
 
 ## u6s-worker nodes
-{% for host in u6sWorkers %}
+{% for host in groups['u6sWorkers'] %}
 {{ hostvars[host]['ansible_host'] }} {{ host }}
 {% endfor %}

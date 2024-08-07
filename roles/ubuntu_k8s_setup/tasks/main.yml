@@ -48,7 +48,7 @@
   ansible.builtin.file:
     path: "{{ mountPoint.k8s.path }}"
     state: absent
-  when: file_stat.state.exists
+  when: file_stat.stat.exists
 
 - name: configure fstab
   ansible.builtin.template:
