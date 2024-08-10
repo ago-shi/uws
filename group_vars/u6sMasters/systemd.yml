@@ -1,0 +1,7 @@
+---
+containerdService:
+  serviceName: containerd.service
+  state: restarted
+  enabled: true
+  configPath: "/etc/containerd/"
+  configFile: "config.toml"

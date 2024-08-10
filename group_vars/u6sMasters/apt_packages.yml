@@ -6,13 +6,38 @@ apt_basic_packages:
     state: present
 
 apt_k8s_packages:
-  containerRuntime: 
+  containerRuntime:
     name: containerd
     state: present
-  kubeXXX: 
+  kubePremise:
+    - name: apt-transport-https
+      state: present
+    - name: ca-certificates
+      state: present
+    - name: curl
+      state: present
+    - name: gpg
+      state: present
+  kubeEtc: 
     - name: kubeadm
       state: present
     - name: kubectl
       state: present
     - name: kubelet
       state: present 
+
+apt_key:
+  k8s:
+    downloadURL: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key"
+    dirPath: "/etc/apt/keyrings/"
+    ascFile: "kubernetes-apt-keyring.asc"
+    gpgFile: "kubernetes-apt-keyring.gpg"
+
+apt_repository:
+  k8s:
+    src: "group_files/u6s-masters/"
+    dest: "/etc/apt/sources.list.d/"
+    file: "kubernetes.list"
+    owner: "root"
+    group: "root"
+    mode: '0644'

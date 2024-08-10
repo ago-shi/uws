@@ -66,3 +66,87 @@
     owner: "{{ etcHosts.owner }}"
     group: "{{ etcHosts.group }}"
     mode: "{{ etcHosts.mode }}"
+
+- name: install containerd runtime for k8s
+  ansible.builtin.apt:
+    name: "{{ apt_k8s_packages.containerRuntime.name }}"
+    state: "{{ apt_k8s_packages.containerRuntime.state }}"
+    update_cache: true
+  register: installResult
+
+- name: configure countainerd
+  when: installResult.changed
+  block:
+    - name: make directory ("{{ containerdService.configPath }}")
+      ansible.builtin.file:
+        - path: "{{ containerdService.configPath }}"
+          state: directory
+    - name: make containerd /tmp/"{{ containerdService.configFile }}"
+      ansible.builtin.shell: | 
+        containerd config default | sudo tee /tmp/"{{ containerdService.configFile }}" && 
+        sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /tmp/"{{ containerdService.configFile }}" && 
+        sed -i 's#sandbox_image = "registry.k8s.io/pause:3.6"#sandbox_image = "registry.k8s.io/pause:3.9"#g' /tmp/"{{ containerdService.configFile }}"
+      changed_when: false
+    - name: Replace "{{ containerdService.configFile }}"
+      ansible.builtin.copy:
+        src: '/tmp/"{{ containerdService.configFile }}"'
+        dest: "{{ containerdService.configPath }}{{ containerdService.configFile }}"
+        backup: true
+      register: copyResult
+    - name: "{{ containerdService.serviceName }} restart"
+      ansible.builtin.systemd:
+        name: "{{ containerdService.serviceName }}"
+        state: "{{ containerdService.state }}"
+      when: copyResult.changed
+    - name: containerd enabled
+      ansible.builtin.systemd:
+        name: "{{ containerdService.serviceName }}"
+        enable: "{{ containerdService.enabled }}"
+
+- name: install k8s premise packages
+  ansible.builtin.apt:
+    name: "{{ item.name }}"
+    state: "{{ item.state }}"
+    update_cache: true
+  loop: "{{ apt_k8s_packages.kubePremise }}"
+
+- name: Download K8s APT key
+  block:
+    - name: Download k8s APT Key to /tmp/
+      ansible.builtin.get_url:
+        url: "{{ apt_key.k8s.downloadURL }}"
+        dest: /tmp/"{{ apt_key.k8s.ascFile }}"
+        mode: '0644'
+        force: true
+      changed_when: false
+
+    - name: Convert k8s APT Key .asc to .gpg
+      ansible.builtin.command: |
+        gpg --dearmor -o /tmp/"{{ apt_key.k8s.gpgFile }} /tmp/{{ apt_key.k8s.ascFile }}"
+      changed_when: false
+
+    - name: Replace /etc/apt/keyrings
+      ansible.builtin.copy:
+        src: /tmp/"{{ apt_key.k8s.gpgFile }}"
+        dest: "{{ apt_key.k8s.dirPath }}{{ apt_key.k8s.gpgFile }}"
+        backup: true
+
+- name: Add k8s repository
+  ansible.builtin.template:
+    src: "{{ apt_repository.k8s.src }}{{ apt_repository.k8s.file }}.j2"
+    dest: "{{ apt_repository.k8s.src }}{{ apt_repository.k8s.file }}"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: install kubeadm / kubectl / kubelet
+  ansible.builtin.apt:
+    name: "{{ item.name }}"
+    state: "{{ item.state }}"
+  loop: "{{ apt_k8s_packages.kubeEtc }}"
+
+- name: hold package update
+  ansible.builtin.dpkg_selections:
+    name: '{{ item.name }}'
+    selection: hold
+  loop: "{{ apt_k8s_packages.kubeEtc }}"
