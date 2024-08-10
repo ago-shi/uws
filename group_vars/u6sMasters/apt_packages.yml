@@ -38,6 +38,6 @@ apt_repository:
     src: "group_files/u6s-masters/"
     dest: "/etc/apt/sources.list.d/"
     file: "kubernetes.list"
-    owner: "root"
-    group: "root"
+    owner: root
+    group: root
     mode: '0644'
