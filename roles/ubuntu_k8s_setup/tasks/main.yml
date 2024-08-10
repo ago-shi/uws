@@ -72,15 +72,14 @@
     name: "{{ apt_k8s_packages.containerRuntime.name }}"
     state: "{{ apt_k8s_packages.containerRuntime.state }}"
     update_cache: true
-  register: installResult
 
 - name: configure countainerd
-  when: installResult.changed
   block:
     - name: make directory ({{ containerdService.configPath }})
       ansible.builtin.file:
         path: "{{ containerdService.configPath }}"
         state: directory
+
     - name: make containerd /tmp/{{ containerdService.configFile }}
       ansible.builtin.shell: | 
         containerd config default | sudo tee /tmp/{{ containerdService.configFile }} && 
@@ -90,21 +89,21 @@
   
     - name: Replace {{ containerdService.configFile }}
       ansible.builtin.shell: |
-        if [ ! -f /etc/hoge.txt ] || ! cmp -s /tmp/{{ containerdService.configFile }} {{ containerdService.configPath }}{{ containerdService.configFile }}; then
+        if [ ! -f {{ containerdService.configPath }}{{ containerdService.configFile }} ] || ! cmp -s /tmp/{{ containerdService.configFile }} {{ containerdService.configPath }}{{ containerdService.configFile }}; then
           cp /tmp/{{ containerdService.configFile }} {{ containerdService.configPath }}{{ containerdService.configFile }}
         fi
-      register: copy_result
-      changed_when: copy_result.rc == 0
-  
+      register: confCopyResult
+      changed_when: confCopyResult.rc == 0
+
     - name: debug
-      ansible.builtin.degug: 
-        msg: "{{ copy_result.stdout }}"
+      ansible.builtin.debug: 
+        msg: "{{ confCopyResult.stdout }}"
 
     - name: "{{ containerdService.serviceName }} restart"
       ansible.builtin.systemd:
         name: "{{ containerdService.serviceName }}"
         state: "{{ containerdService.state }}"
-      when: "'cp /tmp/{{ containerdService.configFile }} {{ containerdService.configPath }}{{ containerdService.configFile }}' in copy_result.stdout"
+      when: "'cp /tmp/{{ containerdService.configFile }} {{ containerdService.configPath }}{{ containerdService.configFile }}' in confCopyResult"
 
     - name: containerd enabled
       ansible.builtin.systemd:
@@ -122,7 +121,7 @@
   block:
     - name: Download k8s APT Key to /tmp/
       ansible.builtin.get_url:
-        url: "{{ apt_key.k8s.downloadURL }}"
+        url: "{{ apt_key.k8s.downloadURL }}{{ apt_key.k8s.downloadKey }}"
         dest: /tmp/{{ apt_key.k8s.ascFile }}
         mode: '0644'
         force: true
@@ -133,11 +132,13 @@
         gpg --dearmor -o /tmp/{{ apt_key.k8s.gpgFile }} /tmp/{{ apt_key.k8s.ascFile }}
       changed_when: false
 
-    - name: Replace /etc/apt/keyrings
-      ansible.builtin.copy:
-        src: /tmp/{{ apt_key.k8s.gpgFile }}
-        dest: "{{ apt_key.k8s.dirPath }}{{ apt_key.k8s.gpgFile }}"
-        backup: true
+    - name: Replace {{ apt_key.k8s.gpgFile }}
+      ansible.builtin.shell: |
+        if [ ! -f {{ apt_key.k8s.dirPath }}{{ apt_key.k8s.gpgFile }} ] || ! cmp -s /tmp/{{ apt_key.k8s.gpgFile }} {{ apt_key.k8s.dirPath }}{{ apt_key.k8s.gpgFile }}; then
+          cp /tmp/{{ apt_key.k8s.gpgFile }} {{ apt_key.k8s.dirPath }}{{ apt_key.k8s.gpgFile }}
+        fi
+      register: gpgCopyResult
+      changed_when: gpgCopyResult.rc == 0
 
 - name: Add k8s repository
   ansible.builtin.template:
@@ -146,6 +147,7 @@
     owner: "{{ apt_repository.k8s.owner }}"
     group: "{{ apt_repository.k8s.group }}"
     mode: "{{ apt_repository.k8s.mode }}"
+  when: "'cp /tmp/{{ apt_key.k8s.gpgFile }} {{ apt_key.k8s.dirPath }}{{ apt_key.k8s.gpgFile }}' in gpgCopyResult"
 
 - name: install kubeadm / kubectl / kubelet
   ansible.builtin.apt:
