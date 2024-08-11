@@ -89,7 +89,7 @@
   
     - name: set Fact var
       ansible.builtin.set_fact:
-        file_copied: "{{ containerdService.configFile + ' is replaced.' }}"
+        file_copied: "{{ 'confCopyResult.stdout == ' + containerdService.configFile + ' is replaced.' }}"
 
     - name: Replace {{ containerdService.configFile }}
       ansible.builtin.shell: |
@@ -98,21 +98,20 @@
           echo {{ containerdService.configFile}} is replaced.
         fi
       register: confCopyResult
-      changed_when: confCopyResult.rc == file_copied
+      changed_when: file_copied
 
     - name: debug1
       ansible.builtin.debug: 
         msg: "{{ confCopyResult.stdout }}"
 
     - name: debug2
-      ansible.builtin.degub:
+      ansible.builtin.debug:
         msg: file_copied
 
     - name: "{{ containerdService.serviceName }} restart"
-      ansible.builtin.systemd:
-        name: "{{ containerdService.serviceName }}"
-        state: "{{ containerdService.state }}"
-      when: "'cp /tmp/{{ containerdService.configFile }} {{ containerdService.configPath }}{{ containerdService.configFile }}' in confCopyResult"
+      ansible.builtin.command: |
+        systemctl daemon-reload
+      when: file_copied
 
     - name: containerd enabled
       ansible.builtin.systemd:
@@ -143,7 +142,7 @@
 
     - name: set Fact var
       ansible.builtin.set_fact:
-        file_copied: "{{ apt_key.k8s.gpgFile + ' is replaced.' }}"
+        file_copied: "{{ 'gpgCopyResult.stdout  == ' + apt_key.k8s.gpgFile + ' is replaced.' }}"
 
     - name: Replace {{ apt_key.k8s.gpgFile }}
       ansible.builtin.shell: |
@@ -152,7 +151,7 @@
           echo {{ apt_key.k8s.gpgFile }} is replaced.
         fi
       register: gpgCopyResult
-      changed_when: gpgCopyResult.rc == file_copied
+      changed_when: file_copied
 
     - name: debug2
       ansible.builtin.debug:
@@ -165,7 +164,7 @@
     owner: "{{ apt_repository.k8s.owner }}"
     group: "{{ apt_repository.k8s.group }}"
     mode: "{{ apt_repository.k8s.mode }}"
-  when: "'cp /tmp/{{ apt_key.k8s.gpgFile }} {{ apt_key.k8s.dirPath }}{{ apt_key.k8s.gpgFile }}' in gpgCopyResult"
+  when: file_copied
 
 - name: install kubeadm / kubectl / kubelet
   ansible.builtin.apt:
