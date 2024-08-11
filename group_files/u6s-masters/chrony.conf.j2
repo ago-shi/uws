@@ -23,7 +23,7 @@ confdir /etc/chrony/conf.d
 # pool 2.ubuntu.pool.ntp.org iburst maxsources 2
 
 {% for server in ntpServers %}
-server {{ ntpServers }} iburst
+pool {{ server }} iburst
 {% endfor %}
 
 # Use time sources from DHCP.
