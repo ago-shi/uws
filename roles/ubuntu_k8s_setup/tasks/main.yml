@@ -99,7 +99,13 @@
     - name: debug1
       ansible.builtin.debug: 
         msg: "{{ confCopyResult.stdout }}"
-    
+
+    - name: Remove /tmp/{{ containerdService.configFile }}
+      ansible.builtin.file:
+        name: /tmp/{{ containerdService.configFile }}
+        state: absent
+      changed_when: false
+
     - name: "{{ containerdService.serviceName }} daemon-reload"
       ansible.builtin.command: |
         systemctl daemon-reload
@@ -127,16 +133,10 @@
         force: true
       changed_when: false
 
-    - name: Check if gpg file exists
-      ansible.builtin.stat:
-        path: /tmp/{{ apt_key.k8s.gpgFile }}
-      register: file_stat
-
     - name: Remove gpg file if it exists
       ansible.builtin.file:
         path: /tmp/{{ apt_key.k8s.gpgFile }}
         state: absent
-      when: file_stat.stat.exists
 
     - name: Convert k8s APT Key .asc to .gpg
       ansible.builtin.command: |
@@ -156,6 +156,15 @@
       ansible.builtin.debug: 
         msg: "{{ gpgCopyResult.stdout }}"
 
+    - name: Remove /tmp/{{ apt_key.k8s.gpgFile }} and /tmp/{{ apt_key.k8s.ascFile }}
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      changed_when: false
+      loop:
+        - /tmp/{{ apt_key.k8s.gpgFile }}
+        - /tmp/{{ apt_key.k8s.ascFile }}
+
 - name: Add k8s repository
   ansible.builtin.template:
     src: "{{ apt_repository.k8s.src }}{{ apt_repository.k8s.file }}.j2"
@@ -169,6 +178,7 @@
   ansible.builtin.apt:
     name: "{{ item.name }}"
     state: "{{ item.state }}"
+    update_cache: true
   loop: "{{ apt_k8s_packages.kubeEtc }}"
 
 - name: hold package update
