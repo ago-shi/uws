@@ -1,0 +1,45 @@
+---
+cloudInit:
+  file: "cloud-init.disable"
+  path: "/etc/cloud/"
+
+etcHosts:
+  file: "hosts"
+  src: "group_files/u6s-masters/"
+  dest: "/etc/"
+  owner: "root"
+  group: "root"
+  mode: '0644'
+
+aptPackage:
+  chronyConf:
+    file: "chrony.conf"
+    src: "group_files/u6s-masters/"
+    dest: "/etc/chrony/"
+    owner: "root"
+    group: "root"
+    mode: '0644'
+
+modules_loadd:
+  - file: "k8s.conf"
+    src: "group_files/u6s-masters/modules_"
+    dest: "/etc/modules-load.d/"
+    owner: "root"
+    group: "root"
+    mode: '0644'
+
+sysctld:
+  - file: "k8s.conf"
+    src: "group_files/u6s-masters/sysctl_"
+    dest: "/etc/sysctl.d/"
+    owner: "root"
+    group: "root"
+    mode: '0644'
+
+fstabFile:
+  file: "fstab"
+  src: "group_files/u6s-masters/"
+  dest: "/etc/"
+  owner: "root"
+  group: "root"
+  mode: '0644'

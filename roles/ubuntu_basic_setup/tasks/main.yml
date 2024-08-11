@@ -5,6 +5,13 @@
 # 時刻同期設定
 # ネットワーク設定
 
+- name: Disable cloud-init
+  ansible.builtin.file:
+    path: "{{ cloudInit.path }}{{ cloudInit.file }}"
+    state: touch
+    access_time: preserve
+    modification_time: preserve
+
 - name: Update apt cache
   ansible.builtin.apt:
     update_cache: true
@@ -23,11 +30,11 @@
 
 - name: configure Chrony
   ansible.builtin.template:
-    src: "{{ chrony_conf.src }}{{ chrony_conf.file }}.j2"
-    dest: "{{ chrony_conf.dest }}{{ chrony_conf.file }}"
-    owner: "{{ chrony_conf.owner }}"
-    group: "{{ chrony_conf.group }}"
-    mode: "{{ chrony_conf.mode }}"
+    src: "{{ aptPackage.chronyConf.src }}{{ aptPackage.chronyConf.file }}.j2"
+    dest: "{{ aptPackage.chronyConf.dest }}{{ aptPackage.chronyConf.file }}"
+    owner: "{{ aptPackage.chronyConf.owner }}"
+    group: "{{ aptPackage.chronyConf.group }}"
+    mode: "{{ aptPackage.chronyConf.mode }}"
   notify: Restart chrony service
 
 - name: configure network (check currnet netplan filename)

@@ -4,12 +4,3 @@ datetime_timezone: "Asia/Tokyo"
 # 時刻同期先
 ntpServers: 
   - "ntp.nict.jp"
-
-# ファイル格納場所の定義
-chrony_conf:
-  file: "chrony.conf"
-  src: "group_files/u6s-masters/"
-  dest: "/etc/chrony/"
-  owner: "root"
-  group: "root"
-  mode: '0644'
