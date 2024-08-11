@@ -99,6 +99,7 @@
     - name: debug1
       ansible.builtin.debug: 
         msg: "{{ confCopyResult.stdout }}"
+    
     - name: "{{ containerdService.serviceName }} daemon-reload"
       ansible.builtin.command: |
         systemctl daemon-reload
@@ -149,12 +150,16 @@
           echo {{ apt_key.k8s.gpgFile }} is replaced.
         fi
       register: gpgCopyResult
-      changed_when: gpgCopyResult != ''
+      changed_when: gpgCopyResult.stdout != ''
+
+    - name: debug2
+      ansible.builtin.debug: 
+        msg: "{{ gpgCopyResult.stdout }}"
 
 - name: Add k8s repository
   ansible.builtin.template:
     src: "{{ apt_repository.k8s.src }}{{ apt_repository.k8s.file }}.j2"
-    dest: "{{ apt_repository.k8s.src }}{{ apt_repository.k8s.file }}"
+    dest: "{{ apt_repository.k8s.dest }}{{ apt_repository.k8s.file }}"
     owner: "{{ apt_repository.k8s.owner }}"
     group: "{{ apt_repository.k8s.group }}"
     mode: "{{ apt_repository.k8s.mode }}"
