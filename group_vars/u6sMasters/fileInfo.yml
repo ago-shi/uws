@@ -1,6 +1,6 @@
 ---
 cloudInit:
-  file: "cloud-init.disable"
+  file: "cloud-init.disabled"
   path: "/etc/cloud/"
 
 etcHosts:
