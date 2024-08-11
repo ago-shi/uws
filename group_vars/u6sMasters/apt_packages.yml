@@ -28,7 +28,8 @@ apt_k8s_packages:
 
 apt_key:
   k8s:
-    downloadURL: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key"
+    downloadURL: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/"
+    downloadKey: "Release.key"
     dirPath: "/etc/apt/keyrings/"
     ascFile: "kubernetes-apt-keyring.asc"
     gpgFile: "kubernetes-apt-keyring.gpg"

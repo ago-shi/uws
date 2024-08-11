@@ -87,17 +87,26 @@
         sudo sed -i 's#sandbox_image = "registry.k8s.io/pause:3.6"#sandbox_image = "registry.k8s.io/pause:3.9"#g' /tmp/{{ containerdService.configFile }}
       changed_when: false
   
+    - name: set Fact var
+      ansible.builtin.set_fact:
+        file_copied: "{{ containerdService.configFile + ' is replaced.' }}"
+
     - name: Replace {{ containerdService.configFile }}
       ansible.builtin.shell: |
         if [ ! -f {{ containerdService.configPath }}{{ containerdService.configFile }} ] || ! cmp -s /tmp/{{ containerdService.configFile }} {{ containerdService.configPath }}{{ containerdService.configFile }}; then
           cp /tmp/{{ containerdService.configFile }} {{ containerdService.configPath }}{{ containerdService.configFile }}
+          echo {{ containerdService.configFile}} is replaced.
         fi
       register: confCopyResult
-      changed_when: confCopyResult.rc == 0
+      changed_when: confCopyResult.rc == file_copied
 
-    - name: debug
+    - name: debug1
       ansible.builtin.debug: 
         msg: "{{ confCopyResult.stdout }}"
+
+    - name: debug2
+      ansible.builtin.degub:
+        msg: file_copied
 
     - name: "{{ containerdService.serviceName }} restart"
       ansible.builtin.systemd:
@@ -108,7 +117,7 @@
     - name: containerd enabled
       ansible.builtin.systemd:
         name: "{{ containerdService.serviceName }}"
-        enable: "{{ containerdService.enabled }}"
+        enabled: "{{ containerdService.enabled }}"
 
 - name: install k8s premise packages
   ansible.builtin.apt:
@@ -132,13 +141,22 @@
         gpg --dearmor -o /tmp/{{ apt_key.k8s.gpgFile }} /tmp/{{ apt_key.k8s.ascFile }}
       changed_when: false
 
+    - name: set Fact var
+      ansible.builtin.set_fact:
+        file_copied: "{{ apt_key.k8s.gpgFile + ' is replaced.' }}"
+
     - name: Replace {{ apt_key.k8s.gpgFile }}
       ansible.builtin.shell: |
         if [ ! -f {{ apt_key.k8s.dirPath }}{{ apt_key.k8s.gpgFile }} ] || ! cmp -s /tmp/{{ apt_key.k8s.gpgFile }} {{ apt_key.k8s.dirPath }}{{ apt_key.k8s.gpgFile }}; then
           cp /tmp/{{ apt_key.k8s.gpgFile }} {{ apt_key.k8s.dirPath }}{{ apt_key.k8s.gpgFile }}
+          echo {{ apt_key.k8s.gpgFile }} is replaced.
         fi
       register: gpgCopyResult
-      changed_when: gpgCopyResult.rc == 0
+      changed_when: gpgCopyResult.rc == file_copied
+
+    - name: debug2
+      ansible.builtin.debug:
+        msg: file_copied
 
 - name: Add k8s repository
   ansible.builtin.template:
