@@ -14,6 +14,11 @@ ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 
 # k8s cluster entry
+## u6s-master VIP
+{% for host in groups['u6sVIP'] %}
+{{ hostvars[host]['ansible_host'] }} {{ host }}
+{% endfor %}
+
 ## u6s-master nodes
 {% for host in groups['u6sMasters'] %}
 {{ hostvars[host]['ansible_host'] }} {{ host }}

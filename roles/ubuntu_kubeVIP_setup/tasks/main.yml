@@ -1,0 +1,23 @@
+---
+- name: install containerd runtime for k8s
+  ansible.builtin.apt:
+    name: "{{ item.name }}"
+    state: "{{ item.state }}"
+    update_cache: true
+  loop: "{{ apt_kubeVIP_packages.pemise }}"
+
+- name: configure {{ etcHosts.dest }}{{ etcHosts.file }}
+  ansible.builtin.template:
+    src: "{{ etcHosts.src }}{{ etcHosts.file }}.j2"
+    dest: "{{ etcHosts.dest }}{{ etcHosts.file }}"
+    owner: "{{ etcHosts.owner }}"
+    group: "{{ etcHosts.group }}"
+    mode: "{{ etcHosts.mode }}"
+
+- name: configure {{ k8sFile.kubeVIP.dest }}{{ k8sFile.kubeVIP.file }}
+  ansible.builtin.template:
+    src: "{{ k8sFile.kubeVIP.src }}{{ k8sFile.kubeVIP.file }}.j2"
+    dest: "{{ k8sFile.kubeVIP.dest }}{{ k8sFile.kubeVIP.file }}"
+    owner: "{{ k8sFile.kubeVIP.owner }}"
+    group: "{{ k8sFile.kubeVIP.group }}"
+    mode: "{{ k8sFile.kubeVIP.mode }}"

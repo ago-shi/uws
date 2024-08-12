@@ -7,3 +7,5 @@
       tags: ubuntu_basic_setup
     - role: ubuntu_k8s_setup
       tags: ubuntu_k8s_setup
+    - role: ubuntu_kubeVIP_setup
+      tags: ubuntu_kubeVIP_setup

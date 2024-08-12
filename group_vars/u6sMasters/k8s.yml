@@ -1,0 +1,7 @@
+---
+k8s:
+  network:
+    vhost: u6s-master
+    port: 6443
+    cidr: "10.1.0.0/16"
+  

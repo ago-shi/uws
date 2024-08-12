@@ -43,3 +43,20 @@ fstabFile:
   owner: "root"
   group: "root"
   mode: '0644'
+
+k8sFile:
+  kubeVIP:
+    file: "kube-vip.yaml"
+    src: "group_files/u6s-masters/"
+    dest: "/etc/kubernetes/manifests/"
+    owner: "root"
+    group: "root"
+    mode: '0644'
+  clusterJoin:
+    file: admin.conf
+    src: null
+    dest: "/etc/kuberunetes/"
+    owner: "root"
+    group: "root"
+    mode: '0600'
+
