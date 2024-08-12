@@ -1,11 +1,4 @@
 ---
-- name: install containerd runtime for k8s
-  ansible.builtin.apt:
-    name: "{{ item.name }}"
-    state: "{{ item.state }}"
-    update_cache: true
-  loop: "{{ apt_kubeVIP_packages.pemise }}"
-
 - name: configure {{ etcHosts.dest }}{{ etcHosts.file }}
   ansible.builtin.template:
     src: "{{ etcHosts.src }}{{ etcHosts.file }}.j2"

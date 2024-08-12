@@ -26,13 +26,6 @@ apt_k8s_packages:
     - name: kubelet
       state: present 
 
-apt_kubeVIP_packages:
-  premise:
-    - name: curl
-      state: present
-    - name: jq
-      state: present
-
 apt_key:
   k8s:
     downloadURL: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/"
