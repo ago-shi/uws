@@ -18,7 +18,7 @@ etcHosts:
   mode: '0644'
 
 k8sDummyHosts:
-  src: "{{ defaultFileSet }}/k8sDummyHosts.j2"
+  src: "{{ defaultFileSet.src }}/k8sDummyHosts.j2"
   dest: "/etc/hosts"
 
 aptPackage:
@@ -76,5 +76,5 @@ k8sFile:
     src: "{{ k8sFile.adminConf.dest }}"
     dest: "/home/kubeope/.kube"
     owner: kubeope
-    dest: kubeope
+    group: kubeope
     mode: '0775'
