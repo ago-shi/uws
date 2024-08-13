@@ -44,6 +44,7 @@
     ansible.builtin.shell: |
       if [ ! -f {{ k8sFile.kubectlAuth.dest }}/{{ k8sFile.kubectlAuth.file }} ] || ! cmp -s {{ k8sFile.kubectlAuth.src }} {{ k8sFile.kubectlAuth.dest }}/{{ k8sFile.kubectlAuth.file }}; then
         cp {{ k8sFile.kubectlAuth.src }} {{ k8sFile.kubectlAuth.dest }}/{{ k8sFile.kubectlAuth.file }}
+        chown {{ k8sFile.kubectlAuth.owner }}:{{k8sFile.kubectlAuth.group }} {{ k8sFile.kubectlAuth.dest }}/{{ k8sFile.kubectlAuth.file }}
         echo {{ k8sFile.kubectlAuth.dest }}/{{ k8sFile.kubectlAuth.file }} is replaced.
       fi
     register: confCopyResult
