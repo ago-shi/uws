@@ -4,11 +4,11 @@
   block:
   - name: /etc/hosts changed (VIP is temporary changed.)
     ansible.builtin.template:
-      src: "{{ k8sDummyHosts.src }}"
-      dest: "{{ k8sDummyHosts.dest }}"
-      owner: "{{ k8sDummyHosts.owner | default(defaultFileSet.owner) }}"
-      group: "{{ k8sDummyHosts.group | default(defaultFileSet.group) }}"
-      mode: "{{ k8sDummyHosts.mode | default(defaultFileSet.mode) }}"
+      src: "{{ k8sFile.dummyHosts.src }}"
+      dest: "{{ k8sFile.dummyHosts.dest }}"
+      owner: "{{ k8sFile.dummyHosts.owner | default(defaultFileSet.owner) }}"
+      group: "{{ k8sFile.dummyHosts.group | default(defaultFileSet.group) }}"
+      mode: "{{ k8sFile.dummyHosts.mode | default(defaultFileSet.mode) }}"
 
   - name: exec "kubeadm init" on master node
     ansible.builtin.command:

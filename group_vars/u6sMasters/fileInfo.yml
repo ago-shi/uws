@@ -17,10 +17,6 @@ etcHosts:
   group: "root"
   mode: '0644'
 
-k8sDummyHosts:
-  src: "{{ defaultFileSet.src }}/k8sDummyHosts.j2"
-  dest: "/etc/hosts"
-
 aptPackage:
   chronyConf:
     file: "chrony.conf"
@@ -62,6 +58,9 @@ k8sFile:
     owner: "root"
     group: "root"
     mode: '0644'
+  dummyHosts:
+    src: "{{ defaultFileSet.src }}/k8sDummyHosts.j2"
+    dest: "/etc/hosts"
   adminConf:
     src: null # 自動生成
     dest: "/etc/kubernetes/admin.conf"
