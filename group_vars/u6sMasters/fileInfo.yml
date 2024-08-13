@@ -1,4 +1,10 @@
 ---
+defaultFileSet:
+  src: "group_files/u6s-masters"
+  owner: "root"
+  group: "root"
+  mode: '0644'
+
 cloudInit:
   file: "cloud-init.disabled"
   path: "/etc/cloud/"
@@ -10,6 +16,10 @@ etcHosts:
   owner: "root"
   group: "root"
   mode: '0644'
+
+k8sDummyHosts:
+  src: "{{ defaultFileSet }}/k8sDummyHosts.j2"
+  dest: "/etc/hosts"
 
 aptPackage:
   chronyConf:
@@ -52,11 +62,19 @@ k8sFile:
     owner: "root"
     group: "root"
     mode: '0644'
-  clusterJoin:
-    file: admin.conf
-    src: null
-    dest: "/etc/kuberunetes/"
-    owner: "root"
-    group: "root"
+  adminConf:
+    src: null # 自動生成
+    dest: "/etc/kubernetes/admin.conf"
     mode: '0600'
-
+  clusterJoin:
+    file: "clusterJoin.info"
+    src: null # 自動生成
+    dest: "/etc/kubernetes/"
+    mode: '0600'
+  kubectlAuth:
+    file: "config"
+    src: "{{ k8sFile.adminConf.dest }}"
+    dest: "/home/kubeope/.kube"
+    owner: kubeope
+    dest: kubeope
+    mode: '0775'
