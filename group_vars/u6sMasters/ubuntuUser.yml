@@ -1,0 +1,10 @@
+---
+defaultUbuntuUserSet:
+  create_home: yes
+  shell: /bin/bash
+  update_password: on_create
+
+ubuntuUsers:
+  - name: kubeope
+    password: "{{ 'P@ssw0rd' | password_hash('sha512') }}"
+    state: present

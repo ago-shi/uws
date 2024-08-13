@@ -4,6 +4,7 @@
 # タイムゾーン設定
 # 時刻同期設定
 # ネットワーク設定
+# ユーザ設定
 
 - name: Disable cloud-init
   ansible.builtin.file:
@@ -57,3 +58,6 @@
     mode: "{{ item.mode }}"
   loop: "{{ netplan }}"
   notify: netplan apply
+
+- name: import ubuntu_user task
+  ansible.builtin.import_tasks: user.yml
