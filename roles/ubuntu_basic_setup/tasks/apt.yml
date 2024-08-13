@@ -1,45 +1,45 @@
 ---
 - name: Download K8s APT key
   block:
-    - name: Remove gpg file if it exists
-      ansible.builtin.file:
-        path: /tmp/{{ item.gpgFile }}
-        state: absent
+  - name: Remove gpg file if it exists
+    ansible.builtin.file:
+      path: /tmp/{{ item.gpgFile }}
+      state: absent
     
-    - name: Download k8s APT Key to /tmp/
-      ansible.builtin.get_url:
-        url: "{{ item.downloadURL }}{{ item.downloadKey }}"
-        dest: /tmp/{{ item.ascFile }}
-        mode: '0644'
-        force: true
-      changed_when: false
+  - name: Download k8s APT Key to /tmp/
+    ansible.builtin.get_url:
+      url: "{{ item.downloadURL }}{{ item.downloadKey }}"
+      dest: /tmp/{{ item.ascFile }}
+      mode: '0644'
+      force: true
+    changed_when: false
 
-    - name: Convert k8s APT Key .asc to .gpg
-      ansible.builtin.command: |
-        gpg --dearmor -o /tmp/{{ item.gpgFile }} /tmp/{{ item.ascFile }}
-      changed_when: false
+  - name: Convert k8s APT Key .asc to .gpg
+    ansible.builtin.command: |
+      gpg --dearmor -o /tmp/{{ item.gpgFile }} /tmp/{{ item.ascFile }}
+    changed_when: false
 
-    - name: Replace {{ item.gpgFile }}
-      ansible.builtin.shell: |
-        if [ ! -f {{ item.dirPath | default(aptKeyDefault.dirpath) }}{{ item.gpgFile }} ] || ! cmp -s /tmp/{{ item.gpgFile }} {{ item.dirPath | default(aptKeyDefault.dirpath) }}{{ item.gpgFile }}; then
-          cp /tmp/{{ item.gpgFile }} {{ item.dirPath | default(aptKeyDefault.dirpath) }}{{ item.gpgFile }}
-          echo {{ item.gpgFile }} is replaced.
-        fi
-      register: gpgCopyResult
-      changed_when: gpgCopyResult.stdout != ''
+  - name: Replace {{ item.gpgFile }}
+    ansible.builtin.shell: |
+      if [ ! -f {{ item.dirPath | default(aptKeyDefault.dirpath) }}{{ item.gpgFile }} ] || ! cmp -s /tmp/{{ item.gpgFile }} {{ item.dirPath | default(aptKeyDefault.dirpath) }}{{ item.gpgFile }}; then
+        cp /tmp/{{ item.gpgFile }} {{ item.dirPath | default(aptKeyDefault.dirpath) }}{{ item.gpgFile }}
+        echo {{ item.gpgFile }} is replaced.
+      fi
+    register: gpgCopyResult
+    changed_when: gpgCopyResult.stdout != ''
 
-    - name: debug2
-      ansible.builtin.debug: 
-        msg: "{{ gpgCopyResult.stdout }}"
+  - name: debug2
+    ansible.builtin.debug: 
+      msg: "{{ gpgCopyResult.stdout }}"
 
-    - name: Remove /tmp/{{ item.gpgFile }} and /tmp/{{ item.ascFile }}
-      ansible.builtin.file:
-        path: "{{ item.item }}"
-        state: absent
-      changed_when: false
-      loop:
-        - /tmp/{{ item.gpgFile }}
-        - /tmp/{{ item.ascFile }}
+  - name: Remove /tmp/{{ item.gpgFile }} and /tmp/{{ item.ascFile }}
+    ansible.builtin.file:
+      path: "{{ item.item }}"
+      state: absent
+    changed_when: false
+    loop:
+    - /tmp/{{ item.gpgFile }}
+    - /tmp/{{ item.ascFile }}
   loop: "{{ apt_key }}"
 
 - name: Add repository

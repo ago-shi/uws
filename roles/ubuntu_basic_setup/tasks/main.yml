@@ -51,7 +51,7 @@
   - name: Rename netplan file
     ansible.builtin.command: mv "{{ item.dest }}/{{ item.file }}" "{{ item.dest }}/{{ item.file }}.org"
     when: file_stat.exists
-loop: "{{ netplanBuiltin }}"
+  loop: "{{ netplanBuiltin }}"
 
 - name: configure network (transfer netplan file)
   ansible.builtin.template:
