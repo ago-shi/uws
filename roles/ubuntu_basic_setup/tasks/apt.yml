@@ -1,0 +1,66 @@
+---
+- name: Download K8s APT key
+  block:
+    - name: Remove gpg file if it exists
+      ansible.builtin.file:
+        path: /tmp/{{ item.gpgFile }}
+        state: absent
+    
+    - name: Download k8s APT Key to /tmp/
+      ansible.builtin.get_url:
+        url: "{{ item.downloadURL }}{{ item.downloadKey }}"
+        dest: /tmp/{{ item.ascFile }}
+        mode: '0644'
+        force: true
+      changed_when: false
+
+    - name: Convert k8s APT Key .asc to .gpg
+      ansible.builtin.command: |
+        gpg --dearmor -o /tmp/{{ item.gpgFile }} /tmp/{{ item.ascFile }}
+      changed_when: false
+
+    - name: Replace {{ item.gpgFile }}
+      ansible.builtin.shell: |
+        if [ ! -f {{ item.dirPath | default(aptKeyDefault.dirpath) }}{{ item.gpgFile }} ] || ! cmp -s /tmp/{{ item.gpgFile }} {{ item.dirPath | default(aptKeyDefault.dirpath) }}{{ item.gpgFile }}; then
+          cp /tmp/{{ item.gpgFile }} {{ item.dirPath | default(aptKeyDefault.dirpath) }}{{ item.gpgFile }}
+          echo {{ item.gpgFile }} is replaced.
+        fi
+      register: gpgCopyResult
+      changed_when: gpgCopyResult.stdout != ''
+
+    - name: debug2
+      ansible.builtin.debug: 
+        msg: "{{ gpgCopyResult.stdout }}"
+
+    - name: Remove /tmp/{{ item.gpgFile }} and /tmp/{{ item.ascFile }}
+      ansible.builtin.file:
+        path: "{{ item.item }}"
+        state: absent
+      changed_when: false
+      loop:
+        - /tmp/{{ item.gpgFile }}
+        - /tmp/{{ item.ascFile }}
+  loop: "{{ apt_key }}"
+
+- name: Add repository
+  ansible.builtin.template:
+    src: "{{ item.src | default(aptRepoDefault.src) }}{{ item.file }}.j2"
+    dest: "{{ item.dest | default(aptRepoDefault.dest) }}{{ item.file }}"
+    owner: "{{ item.owner | default(aptRepoDefault.owner) }}"
+    group: "{{ item.group | default(aptRepoDefault.group) }}"
+    mode: "{{ item.mode | default(aptRepoDefault.mode) }}"
+  loop: "{{ aptRepo }}"
+
+- name: apt package managed
+  ansible.builtin.apt:
+    name: "{{ item.name }}"
+    state: "{{ item.state | default(aptPackageDefault.state) }}"
+    update_cache: true
+  loop: "{{ aptPackages }}"
+
+- name: hold package update
+  ansible.builtin.dpkg_selections:
+    name: '{{ item.name }}'
+    selection: hold
+  when: item.hold 
+  loop: "{{ aptPackages }}"

@@ -17,14 +17,23 @@ etcHosts:
   group: "root"
   mode: '0644'
 
-aptPackage:
-  chronyConf:
-    file: "chrony.conf"
-    src: "group_files/u6s-masters/"
-    dest: "/etc/chrony/"
-    owner: "root"
-    group: "root"
-    mode: '0644'
+netplan:
+  - file: "01-netcfg.yaml"
+    src: "group_files/u6s-masters/netplan"
+    dest: "/etc/netplan"
+    mode: '0600'
+
+netplanBuiltin:
+  - file: "50-cloud-init.yaml"
+    dest: "/etc/netplan"
+
+chronyService:
+  configPath: "/etc/chrony"
+  configFile: "chrony.conf"
+
+containerdService:
+  configPath: "/etc/containerd/"
+  configFile: "config.toml"
 
 modules_loadd:
   - file: "k8s.conf"

@@ -1,44 +1,70 @@
 ---
-apt_basic_packages: 
+aptPackages:
   - name: chrony
     state: present
   - name: netplan.io
     state: present
-
-apt_k8s_packages:
-  containerRuntime:
-    name: containerd
+  - name: containerd
     state: present
-  kubePremise:
-    - name: apt-transport-https
-      state: present
-    - name: ca-certificates
-      state: present
-    - name: curl
-      state: present
-    - name: gpg
-      state: present
-  kubeEtc: 
-    - name: kubeadm
-      state: present
-    - name: kubectl
-      state: present
-    - name: kubelet
-      state: present 
+  - name: apt-transport-https
+    state: present
+  - name: ca-certificates
+    state: present
+  - name: curl
+    state: present
+  - name: gpg
+    state: present
+  - name: kubeadm
+    state: present
+    aptkey: true
+    addrepo: true
+    hold: true
+  - name: kubectl
+    state: present
+    aptkey: true
+    addrepo: true
+    hold: true
+  - name: kubelet
+    state: present
+    aptkey: true
+    addrepo: true
+    hold: true 
+  - name: helm
+    state: present
+    aptkey: true
+    addrepo: true
 
-apt_key:
-  k8s:
+aptPackageDefault:
+  state: present
+  aptkey: false
+  addrepo: false
+  hold: false
+
+aptKey:
+  - name: kubeadm/kubectl/kubelet
     downloadURL: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/"
     downloadKey: "Release.key"
-    dirPath: "/etc/apt/keyrings/"
     ascFile: "kubernetes-apt-keyring.asc"
     gpgFile: "kubernetes-apt-keyring.gpg"
 
-apt_repository:
-  k8s:
-    src: "group_files/u6s-masters/"
-    dest: "/etc/apt/sources.list.d/"
+  - name: helm
+    downloadURL: "https://baltocdn.com/helm/"
+    downloadKey: "signing.asc"
+    ascFile: "helm-apt-keyring.asc"
+    gpgFile: "helm-apt-keyring.gpg"
+
+aptKeyDefault:
+  dirPath: "/etc/apt/keyrings/"
+
+aptRepo:
+  - name: kubeadm/kubectl/kubelet
     file: "kubernetes.list"
-    owner: root
-    group: root
-    mode: '0644'
+  - name: helm
+    file: "helm.list"
+
+aptRepoDefault:
+  src: "group_files/u6s-masters/repoList/"
+  dest: "/etc/apt/sources.list.d/"
+  owner: root
+  group: root
+  mode: '0644'

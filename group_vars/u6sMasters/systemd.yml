@@ -1,7 +1,10 @@
 ---
 containerdService:
   serviceName: containerd.service
-  state: restarted
+  state: started
   enabled: true
-  configPath: "/etc/containerd/"
-  configFile: "config.toml"
+
+chronyService:
+  serviceName: chrony.service
+  state: started
+  enabled: true

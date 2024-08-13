@@ -29,6 +29,7 @@
       mode: "{{ clusterJoin.mode | default(defaultFileSet.mode) }}"
     when: kubeInitResult.changed
 
+
   - name: Add k8s operation User
     ansible.builtin.import_tasks: roles/ubuntu_basic_setup/tasks/user.yml
 
@@ -49,3 +50,4 @@
       fi
     register: confCopyResult
     changed_when: confCopyResult.stdout != ''
+  

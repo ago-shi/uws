@@ -67,11 +67,8 @@
     group: "{{ etcHosts.group }}"
     mode: "{{ etcHosts.mode }}"
 
-- name: install containerd runtime for k8s
-  ansible.builtin.apt:
-    name: "{{ apt_k8s_packages.containerRuntime.name }}"
-    state: "{{ apt_k8s_packages.containerRuntime.state }}"
-    update_cache: true
+- name: install containerd runtime and k8s app
+  ansible.builtin.import_tasks: roles/ubuntu_basic_setup/tasks/apt.yml
 
 - name: configure countainerd
   block:
@@ -115,74 +112,3 @@
       ansible.builtin.systemd:
         name: "{{ containerdService.serviceName }}"
         enabled: "{{ containerdService.enabled }}"
-
-- name: install k8s premise packages
-  ansible.builtin.apt:
-    name: "{{ item.name }}"
-    state: "{{ item.state }}"
-    update_cache: true
-  loop: "{{ apt_k8s_packages.kubePremise }}"
-
-- name: Download K8s APT key
-  block:
-    - name: Download k8s APT Key to /tmp/
-      ansible.builtin.get_url:
-        url: "{{ apt_key.k8s.downloadURL }}{{ apt_key.k8s.downloadKey }}"
-        dest: /tmp/{{ apt_key.k8s.ascFile }}
-        mode: '0644'
-        force: true
-      changed_when: false
-
-    - name: Remove gpg file if it exists
-      ansible.builtin.file:
-        path: /tmp/{{ apt_key.k8s.gpgFile }}
-        state: absent
-
-    - name: Convert k8s APT Key .asc to .gpg
-      ansible.builtin.command: |
-        gpg --dearmor -o /tmp/{{ apt_key.k8s.gpgFile }} /tmp/{{ apt_key.k8s.ascFile }}
-      changed_when: false
-
-    - name: Replace {{ apt_key.k8s.gpgFile }}
-      ansible.builtin.shell: |
-        if [ ! -f {{ apt_key.k8s.dirPath }}{{ apt_key.k8s.gpgFile }} ] || ! cmp -s /tmp/{{ apt_key.k8s.gpgFile }} {{ apt_key.k8s.dirPath }}{{ apt_key.k8s.gpgFile }}; then
-          cp /tmp/{{ apt_key.k8s.gpgFile }} {{ apt_key.k8s.dirPath }}{{ apt_key.k8s.gpgFile }}
-          echo {{ apt_key.k8s.gpgFile }} is replaced.
-        fi
-      register: gpgCopyResult
-      changed_when: gpgCopyResult.stdout != ''
-
-    - name: debug2
-      ansible.builtin.debug: 
-        msg: "{{ gpgCopyResult.stdout }}"
-
-    - name: Remove /tmp/{{ apt_key.k8s.gpgFile }} and /tmp/{{ apt_key.k8s.ascFile }}
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: absent
-      changed_when: false
-      loop:
-        - /tmp/{{ apt_key.k8s.gpgFile }}
-        - /tmp/{{ apt_key.k8s.ascFile }}
-
-- name: Add k8s repository
-  ansible.builtin.template:
-    src: "{{ apt_repository.k8s.src }}{{ apt_repository.k8s.file }}.j2"
-    dest: "{{ apt_repository.k8s.dest }}{{ apt_repository.k8s.file }}"
-    owner: "{{ apt_repository.k8s.owner }}"
-    group: "{{ apt_repository.k8s.group }}"
-    mode: "{{ apt_repository.k8s.mode }}"
-  when: gpgCopyResult != ''
-
-- name: install kubeadm / kubectl / kubelet
-  ansible.builtin.apt:
-    name: "{{ item.name }}"
-    state: "{{ item.state }}"
-    update_cache: true
-  loop: "{{ apt_k8s_packages.kubeEtc }}"
-
-- name: hold package update
-  ansible.builtin.dpkg_selections:
-    name: '{{ item.name }}'
-    selection: hold
-  loop: "{{ apt_k8s_packages.kubeEtc }}"

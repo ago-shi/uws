@@ -13,51 +13,59 @@
     access_time: preserve
     modification_time: preserve
 
-- name: Update apt cache
-  ansible.builtin.apt:
-    update_cache: true
-    upgrade: full
-    purge: true
-
-- name: install basic packages
-  ansible.builtin.apt: 
-    name: "{{ item.name }}"
-    state: "{{ item.state }}"
-  loop: "{{ apt_basic_packages }}"
-
 - name: timezone setup to "{{ datetime_timezone }}"
   community.general.timezone:
     name: "{{ datetime_timezone }}"
 
 - name: configure Chrony
   ansible.builtin.template:
-    src: "{{ aptPackage.chronyConf.src }}{{ aptPackage.chronyConf.file }}.j2"
-    dest: "{{ aptPackage.chronyConf.dest }}{{ aptPackage.chronyConf.file }}"
-    owner: "{{ aptPackage.chronyConf.owner }}"
-    group: "{{ aptPackage.chronyConf.group }}"
-    mode: "{{ aptPackage.chronyConf.mode }}"
-  notify: Restart chrony service
+    src: "{{ chronyService.src | default(defaultFileSet.src) }}/{{ chronyService.file }}.j2"
+    dest: "{{ chronyService.dest }}/{{ chronyService.file }}"
+    owner: "{{ chronyService.owner | default(defaultFileSet.owner }}"
+    group: "{{ chronyService.group | default(defaultFileSet.group }}"
+    mode: "{{ chronyService.mode | default(defaultFileSet.mode }}"
+  register: chronyUpdate
 
-- name: configure network (check currnet netplan filename)
-  ansible.builtin.stat:
-    path: "{{ netplanPath }}{{ item }}"
-  register: file_stat
-  loop: "{{ nwBuiltinFiles }}"
+- name: Restart chrony service
+  ansible.builtin.systemd:
+    name: chrony
+    state: restarted
+    enabled: true
+  when: chronyUpdate.changed
 
-- name: Rename netplanfile
-  ansible.builtin.command: mv "{{ netplanPath }}{{ item.item }}" "{{ netplanPath }}{{ item.item }}.org"
-  when: item.stat.exists
-  loop: "{{ file_stat.results }}"
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: full
+    purge: true
+
+- name: install packages
+  ansible.builtin.import_tasks: apt.yml
+
+- name: Rename builtin netplan file 
+  block:
+  - name: configure network (check currnet netplan filename)
+    ansible.builtin.stat:
+      path: "{{ item.dest }}/{{ item.file }}"
+    register: file_stat
+  - name: Rename netplan file
+    ansible.builtin.command: mv "{{ item.dest }}/{{ item.file }}" "{{ item.dest }}/{{ item.file }}.org"
+    when: file_stat.exists
+loop: "{{ netplanBuiltin }}"
 
 - name: configure network (transfer netplan file)
   ansible.builtin.template:
-    src: "{{ item.src }}{{ item.file }}.j2"
-    dest: "{{ item.dest }}{{ item.file }}"
-    owner: "{{ item.owner }}"
-    group: "{{ item.group }}"
-    mode: "{{ item.mode }}"
+    src: "{{ item.src | default(defaultFileSet.src) }}/{{ item.file }}.j2"
+    dest: "{{ item.dest }}/{{ item.file }}"
+    owner: "{{ item.owner | default(defaultFileSet.owner) }}"
+    group: "{{ item.group | default(defaultFileSet.group) }}"
+    mode: "{{ item.mode | default(defaultFileSet.mode) }}"
   loop: "{{ netplan }}"
-  notify: netplan apply
+  register: netplanUpdate
+
+- name: netplan apply
+  ansible.builtin.command: "netplan apply --debug"
+  when: netplanUpdate.changed
 
 - name: import ubuntu_user task
   ansible.builtin.import_tasks: user.yml
