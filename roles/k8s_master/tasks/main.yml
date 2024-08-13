@@ -1,14 +1,14 @@
 ---
 - name: Initialize Kubernetes master
-  when: kubeadmInitNode == true
+  when: kubeadmInitNode == 'true'
   block:
   - name: /etc/hosts changed (VIP is temporary changed.)
     ansible.builtin.template:
       src: "{{ k8sDummyHosts.src }}"
       dest: "{{ k8sDummyHosts.dest }}"
-      owner: "{{ etcHosts.owner | default(defaultFileSet.owner) }}"
-      group: "{{ etcHosts.group | default(defaultFileSet.group) }}"
-      mode: "{{ etcHosts.mode | default(defaultFileSet.mode) }}"
+      owner: "{{ k8sDummyHosts.owner | default(defaultFileSet.owner) }}"
+      group: "{{ k8sDummyHosts.group | default(defaultFileSet.group) }}"
+      mode: "{{ k8sDummyHosts.mode | default(defaultFileSet.mode) }}"
 
   - name: exec "kubeadm init" on master node
     ansible.builtin.command:
