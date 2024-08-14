@@ -48,10 +48,12 @@
     ansible.builtin.stat:
       path: "{{ item.dest }}/{{ item.file }}"
     register: file_stat
+    loop: "{{ netplanBuiltin }}"
+
   - name: Rename netplan file
     ansible.builtin.command: mv "{{ item.dest }}/{{ item.file }}" "{{ item.dest }}/{{ item.file }}.org"
-    when: file_stat.exists
-  loop: "{{ netplanBuiltin }}"
+    when: item.stat.exists
+    loop: "{{ file_stat.results }}"
 
 - name: configure network (transfer netplan file)
   ansible.builtin.template:
@@ -65,7 +67,7 @@
 
 - name: netplan apply
   ansible.builtin.command: "netplan apply --debug"
-  when: netplanUpdate.changed
+  when: netplanUpdate.results | selectattr('changed', 'equalto', true) | list | length > 0
 
 - name: import ubuntu_user task
   ansible.builtin.import_tasks: user.yml
