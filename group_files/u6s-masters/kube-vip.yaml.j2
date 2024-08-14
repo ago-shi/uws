@@ -12,13 +12,13 @@ spec:
     - name: vip_arp
       value: "true"
     - name: port
-      value: {{ k8s.network.port }}
+      value: {{ k8s.network.port | string }}
     - name: vip_nodename
       valueFrom:
         fieldRef:
           fieldPath: spec.nodeName
     - name: vip_interface
-      value: {{ ansible_default_ipv4.interface }}
+      value: {{ ansible_default_ipv4.interface | string }}
     - name: vip_cidr
       value: "32"
     - name: dns_mode
@@ -42,7 +42,7 @@ spec:
     - name: vip_retryperiod
       value: "1"
     - name: address
-      value: {{ hostvars['u6s-master']['ansible_host'] }}
+      value: {{ hostvars['u6s-master']['ansible_host'] | string }}
     - name: prometheus_server
       value: :2112
     image: ghcr.io/kube-vip/kube-vip:v0.8.2
@@ -55,7 +55,7 @@ spec:
         - NET_ADMIN
         - NET_RAW
     volumeMounts:
-    - mountPath: /etc/kubernetes/admin.conf
+    - mountPath: {{ k8sFile.adminConf.dest }}
       name: kubeconfig
   hostAliases:
   - hostnames:
@@ -64,6 +64,6 @@ spec:
   hostNetwork: true
   volumes:
   - hostPath:
-      path: /etc/kubernetes/admin.conf
+      path: {{ k8sFile.adminConf.dest }}
     name: kubeconfig
 status: {}

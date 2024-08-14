@@ -1,7 +1,4 @@
 ---
-- name: sysctl --system
-  ansible.builtin.command: sysctl --system
-
 - name: u6s-master system reboot
   ansible.builtin.reboot:
     reboot_timeout: 300

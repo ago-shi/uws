@@ -22,7 +22,11 @@
     group: "{{ item.group }}"
     mode: "{{ item.mode }}"
   loop: "{{ sysctld }}"
-  notify: sysctl --system
+  register: moduleUpdate
+
+- name: sysctl --system
+  ansible.builtin.command: sysctl --system
+  when: moduleUpdate.results | selectattr('changed', 'equalto', true) | list | length > 0
 
 - name: check swap status
   ansible.builtin.command: swapon -s
@@ -67,8 +71,9 @@
     group: "{{ etcHosts.group }}"
     mode: "{{ etcHosts.mode }}"
 
-- name: install containerd runtime and k8s app
-  ansible.builtin.import_tasks: roles/ubuntu_basic_setup/tasks/apt.yml
+# if ubuntu_k8s_setup task does not execute, you need to remove commentout.
+# - name: install containerd runtime and k8s app
+#   ansible.builtin.import_tasks: roles/ubuntu_basic_setup/tasks/apt.yml
 
 - name: configure countainerd
   block:
@@ -93,7 +98,7 @@
       register: confCopyResult
       changed_when: confCopyResult.stdout != ''
 
-    - name: debug1
+    - name: debug
       ansible.builtin.debug: 
         msg: "{{ confCopyResult.stdout }}"
 
