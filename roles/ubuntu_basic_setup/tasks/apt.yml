@@ -5,6 +5,7 @@
     ansible.builtin.file:
       path: /tmp/{{ item.gpgFile }}
       state: absent
+    loop: "{{ aptKey }}"
     
   - name: Download k8s APT Key to /tmp/
     ansible.builtin.get_url:
@@ -13,11 +14,13 @@
       mode: '0644'
       force: true
     changed_when: false
+    loop: "{{ aptKey }}"
 
   - name: Convert k8s APT Key .asc to .gpg
     ansible.builtin.command: |
       gpg --dearmor -o /tmp/{{ item.gpgFile }} /tmp/{{ item.ascFile }}
     changed_when: false
+    loop: "{{ aptkey }}"
 
   - name: Replace {{ item.gpgFile }}
     ansible.builtin.shell: |
@@ -27,20 +30,26 @@
       fi
     register: gpgCopyResult
     changed_when: gpgCopyResult.stdout != ''
+    loop: "{{ aptKey }}"
 
-  - name: debug2
+  - name: debug
     ansible.builtin.debug: 
-      msg: "{{ gpgCopyResult.stdout }}"
+      msg: "{{ item.stdout }}"
+    loop: "{{ gpgCopyResult.result }}"
 
-  - name: Remove /tmp/{{ item.gpgFile }} and /tmp/{{ item.ascFile }}
+  - name: Remove /tmp/{{ item.ascFile }}
     ansible.builtin.file:
-      path: "{{ item.item }}"
+      path: "{{ item.ascFile }}"
       state: absent
     changed_when: false
-    loop:
-    - /tmp/{{ item.gpgFile }}
-    - /tmp/{{ item.ascFile }}
-  loop: "{{ apt_key }}"
+    loop: "{{ aptKey }}"
+
+  - name: Remove /tmp/{{ item.gpgFile }}
+    ansible.builtin.file:
+      path: "{{ item.ascFile }}"
+      state: absent
+    changed_when: false
+    loop: "{{ item.gpgFile }}"
 
 - name: Add repository
   ansible.builtin.template:
@@ -60,7 +69,7 @@
 
 - name: hold package update
   ansible.builtin.dpkg_selections:
-    name: '{{ item.name }}'
+    name: "{{ item.name }}"
     selection: hold
   when: item.hold 
   loop: "{{ aptPackages }}"
