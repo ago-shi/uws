@@ -20,12 +20,12 @@
     ansible.builtin.command: |
       gpg --dearmor -o /tmp/{{ item.gpgFile }} /tmp/{{ item.ascFile }}
     changed_when: false
-    loop: "{{ aptkey }}"
+    loop: "{{ aptKey }}"
 
   - name: Replace {{ item.gpgFile }}
     ansible.builtin.shell: |
-      if [ ! -f {{ item.dirPath | default(aptKeyDefault.dirpath) }}{{ item.gpgFile }} ] || ! cmp -s /tmp/{{ item.gpgFile }} {{ item.dirPath | default(aptKeyDefault.dirpath) }}{{ item.gpgFile }}; then
-        cp /tmp/{{ item.gpgFile }} {{ item.dirPath | default(aptKeyDefault.dirpath) }}{{ item.gpgFile }}
+      if [ ! -f {{ item.dirPath | default(aptKeyDefault.dirPath) }}{{ item.gpgFile }} ] || ! cmp -s /tmp/{{ item.gpgFile }} {{ item.dirPath | default(aptKeyDefault.dirPath) }}{{ item.gpgFile }}; then
+        cp /tmp/{{ item.gpgFile }} {{ item.dirPath | default(aptKeyDefault.dirPath) }}{{ item.gpgFile }}
         echo {{ item.gpgFile }} is replaced.
       fi
     register: gpgCopyResult
@@ -35,21 +35,21 @@
   - name: debug
     ansible.builtin.debug: 
       msg: "{{ item.stdout }}"
-    loop: "{{ gpgCopyResult.result }}"
+    loop: "{{ gpgCopyResult.results }}"
 
   - name: Remove /tmp/{{ item.ascFile }}
     ansible.builtin.file:
-      path: "{{ item.ascFile }}"
+      path: /tmp/{{ item.ascFile }}
       state: absent
     changed_when: false
     loop: "{{ aptKey }}"
 
   - name: Remove /tmp/{{ item.gpgFile }}
     ansible.builtin.file:
-      path: "{{ item.ascFile }}"
+      path: /tmp/{{ item.gpgFile }}
       state: absent
     changed_when: false
-    loop: "{{ item.gpgFile }}"
+    loop: "{{ aptKey }}"
 
 - name: Add repository
   ansible.builtin.template:

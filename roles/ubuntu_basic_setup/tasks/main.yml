@@ -19,11 +19,11 @@
 
 - name: configure Chrony
   ansible.builtin.template:
-    src: "{{ chronyService.src | default(defaultFileSet.src) }}/{{ chronyService.file }}.j2"
-    dest: "{{ chronyService.dest }}/{{ chronyService.file }}"
-    owner: "{{ chronyService.owner | default(defaultFileSet.owner }}"
-    group: "{{ chronyService.group | default(defaultFileSet.group }}"
-    mode: "{{ chronyService.mode | default(defaultFileSet.mode }}"
+    src: "{{ chronyService.src | default(defaultFileSet.src) }}/{{ chronyService.configFile }}.j2"
+    dest: "{{ chronyService.configPath }}/{{ chronyService.configFile }}"
+    owner: "{{ chronyService.owner | default(defaultFileSet.owner) }}"
+    group: "{{ chronyService.group | default(defaultFileSet.group) }}"
+    mode: "{{ chronyService.mode | default(defaultFileSet.mode) }}"
   register: chronyUpdate
 
 - name: Restart chrony service
@@ -33,7 +33,7 @@
     enabled: true
   when: chronyUpdate.changed
 
-- name: Update apt cache
+- name: Update apt cache ans apt upgrade
   ansible.builtin.apt:
     update_cache: true
     upgrade: full
