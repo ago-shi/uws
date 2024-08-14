@@ -27,14 +27,6 @@ netplanBuiltin:
   - file: "50-cloud-init.yaml"
     dest: "/etc/netplan"
 
-chronyService:
-  configPath: "/etc/chrony"
-  configFile: "chrony.conf"
-
-containerdService:
-  configPath: "/etc/containerd/"
-  configFile: "config.toml"
-
 modules_loadd:
   - file: "k8s.conf"
     src: "group_files/u6s-masters/modules_"
@@ -86,3 +78,9 @@ k8sFile:
     owner: kubeope
     group: kubeope
     mode: '0775'
+
+# chronyService:
+# -> group_vars/u6sMasters/systemd.yml
+
+# containerdService:
+# -> group_vars/u6sMasters/systemd.yml
