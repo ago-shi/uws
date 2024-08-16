@@ -58,26 +58,18 @@ k8sFile:
     dest: "/etc/kubernetes/manifests/"
     owner: "root"
     group: "root"
-    mode: '0644'
-  dummyHosts:
-    src: "group_files/u6s-masters/k8sDummyHosts.j2"
-    dest: "/etc/hosts"
+    mode: '0600'
   adminConf:
     src: null # 自動生成
     dest: "/etc/kubernetes/admin.conf"
     mode: '0600'
-  clusterJoin:
-    file: "clusterJoin.info"
-    src: null # 自動生成
-    dest: "/etc/kubernetes/"
-    mode: '0600'
   kubectlAuth:
     file: "config"
     src: "/etc/kubernetes/admin.conf"
-    dest: "/home/kubeope/.kube"
-    owner: kubeope
-    group: kubeope
-    mode: '0775'
+    # dest: "/home/(target user)/.kube" -> group_vars/u6sMasters/linuxUser.yml
+    # owner: (target user) -> group_vars/u6sMasters/linuxUser.yml
+    # group: (target user) -> group_vars/u6sMasters/linuxUser.yml
+    mode: '0600'
 
 # chronyService:
 # -> group_vars/u6sMasters/systemd.yml

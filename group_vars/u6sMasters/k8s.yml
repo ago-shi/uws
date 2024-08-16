@@ -4,4 +4,11 @@ k8s:
     vhost: u6s-master
     port: '6443'
     cidr: "10.1.0.0/16"
-  
+
+  cni:
+    cilium: 
+      CLI:
+        latestVer: "https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt"
+        installPath: "/usr/local/bin"
+      cilium:
+        latestVer: "https://raw.githubusercontent.com/cilium/cilium/main/stable.txt"

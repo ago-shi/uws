@@ -9,5 +9,3 @@
       tags: ubuntu_k8s_setup
     - role: k8s_master
       tags: k8s_master
-    - role: ubuntu_kubeVIP_setup
-      tags: ubuntu_kubeVIP_setup

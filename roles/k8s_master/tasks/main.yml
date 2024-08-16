@@ -1,53 +1,85 @@
 ---
-- name: Initialize Kubernetes master
-  when: kubeadmInitNode == 'true'
+- name: kubeVIP install at all master nodes
   block:
-  - name: /etc/hosts changed (VIP is temporary changed.)
+  - name: configure {{ etcHosts.dest }}{{ etcHosts.file }}
     ansible.builtin.template:
-      src: "{{ k8sFile.dummyHosts.src }}"
-      dest: "{{ k8sFile.dummyHosts.dest }}"
-      owner: "{{ k8sFile.dummyHosts.owner | default(defaultFileSet.owner) }}"
-      group: "{{ k8sFile.dummyHosts.group | default(defaultFileSet.group) }}"
-      mode: "{{ k8sFile.dummyHosts.mode | default(defaultFileSet.mode) }}"
+      src: "{{ etcHosts.src }}{{ etcHosts.file }}.j2"
+      dest: "{{ etcHosts.dest }}{{ etcHosts.file }}"
+      owner: "{{ etcHosts.owner }}"
+      group: "{{ etcHosts.group }}"
+      mode: "{{ etcHosts.mode }}"
+  - name: configure {{ k8sFile.kubeVIP.dest }}{{ k8sFile.kubeVIP.file }}
+    ansible.builtin.template:
+      src: "{{ k8sFile.kubeVIP.src }}{{ k8sFile.kubeVIP.file }}.j2"
+      dest: "{{ k8sFile.kubeVIP.dest }}{{ k8sFile.kubeVIP.file }}"
+      owner: "{{ k8sFile.kubeVIP.owner }}"
+      group: "{{ k8sFile.kubeVIP.group }}"
+      mode: "{{ k8sFile.kubeVIP.mode }}"
 
-  - name: exec "kubeadm init" on master node
+- name: Initialize Kubernetes master (represent master node only)
+  ansible.builtin.command:
+    cmd: >
+      kubeadm init 
+      --control-plane-endpoint {{ k8s.network.vhost }}:{{ k8s.network.port}} 
+      --pod-network-cidr={{ k8s.network.cidr }} 
+      --upload-certs
+    creates: "{{ k8sFile.adminConf.dest }}"
+  when: kubeadmInitNode == 'true'
+
+- name: Join Kubernetes controleplain
+  block:
+  - name: Check if there are nodes with kubeadmInitNode=false
+    ansible.builtin.set_fact:
+      k8sCtrlPlainJoin: "{{ groups['u6sMasters'] | selectattr('kubeadmInitNode', 'equalto', 'false') | list | length > 0 }}"
+
+  - name: k8s token create on represent master node
+    ansible.builtin.command: kubeadm token create --print-join-command
+    register: k8sJoinCMD
+    when: kubeadmInitNode == 'true' and k8sCtrlPlainJoin
+
+  - name: k8s certs initialize on represent master node
+    ansible.builtin.command: kubeadm init phase upload-certs --upload-certs
+    register: k8sCertOutput
+    when: kubeadmInitNode == 'true' and k8sCtrlPlainJoin
+
+  - name: get k8s certs
+    ansible.builtin.set_fact:
+      k8sCertKey: "{{ k8sCertOutput.stdout_lines[-1] }}"
+    when: k8sCertOutput.changed
+
+  - name: exec "kubeadm join" on master node
     ansible.builtin.command:
       cmd: >
-        kubeadm init 
-        --control-plane-endpoint {{ k8s.network.vhost }}:{{ k8s.network.port}} 
-        --pod-network-cidr={{ k8s.network.cidr }} 
-        --upload-certs
+        "{{ k8sJoinCMD }} "
+	      --control-plane 
+        --certificate-key {{ k8sCertKey }}
       creates: "{{ k8sFile.adminConf.dest }}"
-    register: kubeInitResult
+    when: kubeadmInitNode == 'false'
 
-  - name: save k8s cluster join infomation file
-    ansible.builtin.copy:
-      content: "{{ kubeInitResult.stdout_lines }}"
-      dest: "{{ k8sFile.clusterJoin.dest }}{{ k8sFile.clusterJoin.file }}"
-      owner: "{{ clusterJoin.owner | default(defaultFileSet.owner) }}"
-      group: "{{ clusterJoin.group | default(defaultFileSet.group) }}"
-      mode: "{{ clusterJoin.mode | default(defaultFileSet.mode) }}"
-    when: kubeInitResult.changed
+# if ubuntu_k8s_setup task does not execute, you need to remove commentout.
+# - name: Add k8s operation User
+#  ansible.builtin.import_tasks: roles/ubuntu_basic_setup/tasks/user.yml
 
+- name: make directory (/home/targetUser/.kube)
+  ansible.builtin.file:
+    path: /home/{{ item.name }}/.kube
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: "{{ k8sFile.kubectlAuth.mode | default(defaultFileSet.mode) }}"
+  loop: "{{ linuxUsers }}"
 
-  - name: Add k8s operation User
-    ansible.builtin.import_tasks: roles/ubuntu_basic_setup/tasks/user.yml
+- name: Add kubectl authority
+  ansible.builtin.shell: |
+    if [ ! -f /home/{{ item.name }}/.kube/{{ k8sFile.kubectlAuth.file }} ] || ! cmp -s {{ k8sFile.kubectlAuth.src }} /home/{{ item.name }}/.kube/{{ k8sFile.kubectlAuth.file }}; then
+      cp {{ k8sFile.kubectlAuth.src }} /home/{{ item.name }}/.kube/{{ k8sFile.kubectlAuth.file }}
+      chown {{ item.name }}:{{ item.name }} /home/{{ item.name }}/.kube/{{ k8sFile.kubectlAuth.file }}
+      echo /home/{{ item.name }}/.kube/{{ k8sFile.kubectlAuth.file }} is replaced.
+    fi
+  register: confCopyResult
+  changed_when: confCopyResult.stdout != ''
+  loop: "{{ linuxUsers }}"
 
-  - name: make directory ({{ k8sFile.kubectlAuth.dest }})
-    ansible.builtin.file:
-      path: "{{ k8sFile.kubectlAuth.dest }}"
-      state: directory
-      owner: "{{ k8sFile.kubectlAuth.owner | default(defaultFileSet.owner) }}"
-      group: "{{ k8sFile.kubectlAuth.group | default(defaultFileSet.group) }}"
-      mode: "{{ k8sFile.kubectlAuth.mode | default(defaultFileSet.mode) }}"
-
-  - name: Add kubectl authority
-    ansible.builtin.shell: |
-      if [ ! -f {{ k8sFile.kubectlAuth.dest }}/{{ k8sFile.kubectlAuth.file }} ] || ! cmp -s {{ k8sFile.kubectlAuth.src }} {{ k8sFile.kubectlAuth.dest }}/{{ k8sFile.kubectlAuth.file }}; then
-        cp {{ k8sFile.kubectlAuth.src }} {{ k8sFile.kubectlAuth.dest }}/{{ k8sFile.kubectlAuth.file }}
-        chown {{ k8sFile.kubectlAuth.owner }}:{{k8sFile.kubectlAuth.group }} {{ k8sFile.kubectlAuth.dest }}/{{ k8sFile.kubectlAuth.file }}
-        echo {{ k8sFile.kubectlAuth.dest }}/{{ k8sFile.kubectlAuth.file }} is replaced.
-      fi
-    register: confCopyResult
-    changed_when: confCopyResult.stdout != ''
-  
+# 任意のCNIを利用できるようにCNIインストールはtaskを切り出し。
+- name: CNI=cilium install
+  ansible.builtin.import_tasks: cilium.yml
