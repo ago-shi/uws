@@ -26,53 +26,44 @@
     creates: "{{ k8sFile.adminConf.dest }}"
   when: kubeadmInitNode == 'true'
 
-- name: Join Kubernetes controleplain
-  block:
-    - name: check join node exist
-      block:
-        - name: initialize joinExec variable
-          ansible.builtin.set_fact:
-            joinExec: false
-          run_once: true
+- name: initialize joinExec variable
+  ansible.builtin.set_fact:
+    joinExec: false
+  run_once: true
         
-        - name: checking join node exist
-          ansible.builtin.set_fact:
-            joinExec: true
-          when: hostvars[item]['kubeadmInitNode'] == 'false'
-          loop: "{{ k8s.master.nodeList }}"
-          run_once: true
+- name: checking join node exist
+  ansible.builtin.set_fact:
+    joinExec: true
+  when: hostvars[item]['kubeadmInitNode'] == 'false'
+  loop: "{{ k8s.master.nodeList }}"
+  run_once: true
 
-    - name: k8s token create on represent master node
-      ansible.builtin.command: kubeadm token create --print-join-command
-      register: k8sJoinCMD
-      when: kubeadmInitNode == 'true' and joinExec
+- name: k8s token create on represent master node
+  ansible.builtin.command: 
+    cmd: kubeadm token create --print-join-command
+  register: k8sJoinCMD
+  when: kubeadmInitNode == 'true' and joinExec
 
-    - name: k8s certs initialize on represent master node
-      when: joinExec
-      block:
-        - name: exec kubeadm init phase upload-certs --upload-certs
-          ansible.builtin.command: kubeadm init phase upload-certs --upload-certs
-          register: k8sCertOutput
-          when: kubeadmInitNode == 'true'
+- name: exec kubeadm init phase upload-certs --upload-certs
+  ansible.builtin.command: 
+    cmd: kubeadm init phase upload-certs --upload-certs
+  register: k8sCertOutput
+  when: kubeadmInitNode == 'true' and joinExec
 
-        - name: get k8s certs
-          ansible.builtin.set_fact:
-            k8sCertKey: "{{ k8sCertOutput.stdout_lines[-1] }}"
-          when: kubeadmInitNode == 'true'
+- name: get k8s certs
+  ansible.builtin.set_fact:
+    k8sCertKey: "{{ k8sCertOutput.stdout_lines[-1] }}"
+  when: kubeadmInitNode == 'true' and joinExec
+  run_once: true
 
-        - name: debug certs
-          debug:
-            msg: "{{ k8sCertKey }}"
-          run_once: true
-          
-    - name: exec "kubeadm join" on master node
-      ansible.builtin.command:
-        cmd: >
-          "{{ k8sJoinCMD }} "
-          --control-plane 
-          --certificate-key {{ k8sCertKey }}
-        creates: "{{ k8sFile.adminConf.dest }}"
-      when: kubeadmInitNode == 'false' and joinExec
+- name: exec "kubeadm join" on master node
+  ansible.builtin.command:
+    cmd: >
+      "{{ k8sJoinCMD }} "
+      --control-plane 
+      --certificate-key {{ k8sCertKey }}
+    creates: "{{ k8sFile.adminConf.dest }}"
+  when: kubeadmInitNode == 'false' and joinExec
 
 # if ubuntu_k8s_setup task does not execute, you need to remove commentout.
 # - name: Add k8s operation User
@@ -84,6 +75,7 @@
     state: directory
     owner: "{{ item.name }}"
     group: "{{ item.name }}"
+  when: "{{ item.auth.kubectl }}"
   loop: "{{ linuxUsers }}"
 
 - name: Add kubectl authority
@@ -95,8 +87,9 @@
     fi
   register: confCopyResult
   changed_when: confCopyResult.stdout != ''
+  when: "{{ item.auth.kubectl }}"
   loop: "{{ linuxUsers }}"
 
 # 任意のCNIを利用できるようにCNIインストールはtaskを切り出し。
-- name: CNI=cilium install
-  ansible.builtin.import_tasks: cilium.yml
+# - name: CNI=cilium install
+#  ansible.builtin.import_tasks: cilium.yml

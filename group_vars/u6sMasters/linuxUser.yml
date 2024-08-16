@@ -15,3 +15,5 @@ linuxUsers:
   - name: ansible
     password: "{{ 'P@ssw0rd' | password_hash('sha512') }}"
     state: present
+    auth:
+      kubectl: true
