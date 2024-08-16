@@ -44,6 +44,10 @@
   register: k8sJoinCMD
   when: kubeadmInitNode == 'true' and joinExec
 
+- name: debug k8s join command
+  debug:
+    msg: "{{ k8sJoinCMD }}"
+
 - name: exec kubeadm init phase upload-certs --upload-certs
   ansible.builtin.command: 
     cmd: kubeadm init phase upload-certs --upload-certs
@@ -58,10 +62,7 @@
 
 - name: exec "kubeadm join" on master node
   ansible.builtin.command:
-    cmd: >
-      "{{ k8sJoinCMD }} "
-      --control-plane 
-      --certificate-key {{ k8sCertKey }}
+    cmd: "{{ k8sJoinCMD }} --control-plane --certificate-key {{ k8sCertKey }}"
     creates: "{{ k8sFile.adminConf.dest }}"
   when: kubeadmInitNode == 'false' and joinExec
 
