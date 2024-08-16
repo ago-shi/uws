@@ -41,12 +41,14 @@
 - name: k8s token create on represent master node
   ansible.builtin.command: 
     cmd: kubeadm token create --print-join-command
-  register: k8sJoinCMD
+  register: k8sJoin
   when: kubeadmInitNode == 'true' and joinExec
 
-- name: debug k8s join command
-  debug:
-    msg: "{{ k8sJoinCMD }}"
+- name: kubeadm join command set
+  ansible.builtin.set_fact:
+    kubeadmJoin: "{{ k8sJoin.stdout }}"
+  run_once: true
+  when: kubeadmInitNode == 'true' and joinExec
 
 - name: exec kubeadm init phase upload-certs --upload-certs
   ansible.builtin.command: 
@@ -60,9 +62,13 @@
   when: kubeadmInitNode == 'true' and joinExec
   run_once: true
 
+- name: debug k8s join command2
+  debug:
+    msg: "{{ kubeadmJoin }}"
+
 - name: exec "kubeadm join" on master node
   ansible.builtin.command:
-    cmd: "{{ k8sJoinCMD }} --control-plane --certificate-key {{ k8sCertKey }}"
+    cmd: "{{ kubeadmJoin }} --control-plane --certificate-key {{ k8sCertKey }}"
     creates: "{{ k8sFile.adminConf.dest }}"
   when: kubeadmInitNode == 'false' and joinExec
 
