@@ -1,20 +1,20 @@
 ---
 - name: kubeVIP install at all master nodes
   block:
-  - name: configure {{ etcHosts.dest }}{{ etcHosts.file }}
-    ansible.builtin.template:
-      src: "{{ etcHosts.src }}{{ etcHosts.file }}.j2"
-      dest: "{{ etcHosts.dest }}{{ etcHosts.file }}"
-      owner: "{{ etcHosts.owner }}"
-      group: "{{ etcHosts.group }}"
-      mode: "{{ etcHosts.mode }}"
-  - name: configure {{ k8sFile.kubeVIP.dest }}{{ k8sFile.kubeVIP.file }}
-    ansible.builtin.template:
-      src: "{{ k8sFile.kubeVIP.src }}{{ k8sFile.kubeVIP.file }}.j2"
-      dest: "{{ k8sFile.kubeVIP.dest }}{{ k8sFile.kubeVIP.file }}"
-      owner: "{{ k8sFile.kubeVIP.owner }}"
-      group: "{{ k8sFile.kubeVIP.group }}"
-      mode: "{{ k8sFile.kubeVIP.mode }}"
+    - name: configure {{ etcHosts.dest }}{{ etcHosts.file }}
+      ansible.builtin.template:
+        src: "{{ etcHosts.src }}{{ etcHosts.file }}.j2"
+        dest: "{{ etcHosts.dest }}{{ etcHosts.file }}"
+        owner: "{{ etcHosts.owner }}"
+        group: "{{ etcHosts.group }}"
+        mode: "{{ etcHosts.mode }}"
+    - name: configure {{ k8sFile.kubeVIP.dest }}{{ k8sFile.kubeVIP.file }}
+      ansible.builtin.template:
+        src: "{{ k8sFile.kubeVIP.src }}{{ k8sFile.kubeVIP.file }}.j2"
+        dest: "{{ k8sFile.kubeVIP.dest }}{{ k8sFile.kubeVIP.file }}"
+        owner: "{{ k8sFile.kubeVIP.owner }}"
+        group: "{{ k8sFile.kubeVIP.group }}"
+        mode: "{{ k8sFile.kubeVIP.mode }}"
 
 - name: Initialize Kubernetes master (represent master node only)
   ansible.builtin.command:
@@ -28,33 +28,46 @@
 
 - name: Join Kubernetes controleplain
   block:
-  - name: Check if there are nodes with kubeadmInitNode=false
-    ansible.builtin.set_fact:
-      k8sCtrlPlainJoin: "{{ groups['u6sMasters'] | selectattr('kubeadmInitNode', 'equalto', 'false') | list | length > 0 }}"
+    - name: check join node exist
+      block:
+        - name: initialize joinExec variable
+          ansible.builtin.set_fact:
+            joinExec: false
+          run_once: true
+        
+        - name: checking join node exist
+          ansible.builtin.set_fact:
+            joinExec: true
+          when: hostvars[item]['kubeadmInitNode'] == 'false'
+          loop: "{{ k8s.master.nodeList }}"
+          run_once: true
 
-  - name: k8s token create on represent master node
-    ansible.builtin.command: kubeadm token create --print-join-command
-    register: k8sJoinCMD
-    when: kubeadmInitNode == 'true' and k8sCtrlPlainJoin
+    - name: k8s token create on represent master node
+      ansible.builtin.command: kubeadm token create --print-join-command
+      register: k8sJoinCMD
+      when: kubeadmInitNode == 'true' and joinExec
 
-  - name: k8s certs initialize on represent master node
-    ansible.builtin.command: kubeadm init phase upload-certs --upload-certs
-    register: k8sCertOutput
-    when: kubeadmInitNode == 'true' and k8sCtrlPlainJoin
+    - name: k8s certs initialize on represent master node
+      when: joinExec
+      block:
+        - name: exec kubeadm init phase upload-certs --upload-certs
+          ansible.builtin.command: kubeadm init phase upload-certs --upload-certs
+          register: k8sCertOutput
+          when: kubeadmInitNode == 'true'
 
-  - name: get k8s certs
-    ansible.builtin.set_fact:
-      k8sCertKey: "{{ k8sCertOutput.stdout_lines[-1] }}"
-    when: k8sCertOutput.changed
+        - name: get k8s certs
+          ansible.builtin.set_fact:
+            k8sCertKey: "{{ k8sCertOutput.stdout_lines[-1] }}"
+          when: kubeadmInitNode == 'true'
 
-  - name: exec "kubeadm join" on master node
-    ansible.builtin.command:
-      cmd: >
-        "{{ k8sJoinCMD }} "
-	      --control-plane 
-        --certificate-key {{ k8sCertKey }}
-      creates: "{{ k8sFile.adminConf.dest }}"
-    when: kubeadmInitNode == 'false'
+        - name: exec "kubeadm join" on master node
+          ansible.builtin.command:
+            cmd: >
+              "{{ k8sJoinCMD }} "
+              --control-plane 
+              --certificate-key {{ k8sCertKey }}
+            creates: "{{ k8sFile.adminConf.dest }}"
+          when: kubeadmInitNode == 'false'
 
 # if ubuntu_k8s_setup task does not execute, you need to remove commentout.
 # - name: Add k8s operation User
