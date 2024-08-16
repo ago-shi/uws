@@ -60,14 +60,19 @@
             k8sCertKey: "{{ k8sCertOutput.stdout_lines[-1] }}"
           when: kubeadmInitNode == 'true'
 
-        - name: exec "kubeadm join" on master node
-          ansible.builtin.command:
-            cmd: >
-              "{{ k8sJoinCMD }} "
-              --control-plane 
-              --certificate-key {{ k8sCertKey }}
-            creates: "{{ k8sFile.adminConf.dest }}"
-          when: kubeadmInitNode == 'false'
+        - name: debug certs
+          debug:
+            msg: "{{ k8sCertKey }}"
+          run_once: true
+          
+    - name: exec "kubeadm join" on master node
+      ansible.builtin.command:
+        cmd: >
+          "{{ k8sJoinCMD }} "
+          --control-plane 
+          --certificate-key {{ k8sCertKey }}
+        creates: "{{ k8sFile.adminConf.dest }}"
+      when: kubeadmInitNode == 'false' and joinExec
 
 # if ubuntu_k8s_setup task does not execute, you need to remove commentout.
 # - name: Add k8s operation User
@@ -79,7 +84,6 @@
     state: directory
     owner: "{{ item.name }}"
     group: "{{ item.name }}"
-    mode: "{{ k8sFile.kubectlAuth.mode | default(defaultFileSet.mode) }}"
   loop: "{{ linuxUsers }}"
 
 - name: Add kubectl authority
