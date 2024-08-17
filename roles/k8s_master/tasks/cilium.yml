@@ -9,7 +9,7 @@
 
 - name: Get Cilium CLI stable version
   ansible.builtin.uri:
-    url: "{{ cni.cilium.CLI.latestVer }}"
+    url: "{{ k8s.cni.cilium.CLI.latestVer }}"
     return_content: true
   register: ciliumCliVer
   run_once: true
@@ -30,6 +30,7 @@
 - name: Mold cpuArch fact 
   ansible.builtin.set_fact:
     cpuArch: "{{ cpuArch | replace(' ', '') | replace('\n', '') }}"
+  when: cliumChk.rc != 0
 
 - name: Fail if cpu architecture is Other
   ansible.builtin.fail:
@@ -58,10 +59,10 @@
 - name: Extract Cilium CLI
   ansible.builtin.unarchive:
     src: /tmp/cilium-linux-{{ cpuArch }}.tar.gz
-    dest: "{{ cni.cilium.CLI.installPath }}"
+    dest: "{{ k8s.cni.cilium.CLI.installPath }}"
     remote_src: true
     extra_opts: --gzip
-    creates: "{{ cni.cilium.CLI.installPath }}/cilium"
+    creates: "{{ k8s.cni.cilium.CLI.installPath }}/cilium"
   when: ciliumChk.rc != 0  
 
 - name: Remove tarball and checksum
@@ -90,7 +91,7 @@
       block:
         - name: Get cilium stable version
           ansible.builtin.uri:
-            url: "{{ cni.cilium.cilium.latestVer }}"
+            url: "{{ k8s.cni.cilium.cilium.latestVer }}"
             return_content: true
           register: ciliumVer
 
