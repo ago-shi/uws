@@ -12,7 +12,7 @@
     url: "{{ k8s.cni.cilium.CLI.latestVer }}"
     return_content: true
   register: ciliumCliVer
-  run_once: true
+  # run_once: true
   when: ciliumChk.rc != 0
 
 - name: Set fact cpu architecture
@@ -30,7 +30,7 @@
 - name: Mold cpuArch fact 
   ansible.builtin.set_fact:
     cpuArch: "{{ cpuArch | replace(' ', '') | replace('\n', '') }}"
-  when: cliumChk.rc != 0
+  when: ciliumChk.rc != 0
 
 - name: Fail if cpu architecture is Other
   ansible.builtin.fail:
@@ -67,20 +67,19 @@
 
 - name: Remove tarball and checksum
   ansible.builtin.file:
-    path: /tmp/cilium-linux-{{ cli_arch }}.tar.gz{{ item }}
+    path: /tmp/cilium-linux-{{ cpuArch }}.tar.gz{{ item }}
     state: absent
   changed_when: false
   loop:
     - ""
     - ".sha256sum"
-  when: ciliumChk.rc != 0
 
 - name: Cilium install on represent master node
   when: kubeadmInitNode == 'true'
   block:
     - name: Check cilium install status
       ansible.builtin.shell:
-        cmd: kubectl get pods --namespace kube-system | ^grep cilium- 
+        cmd: kubectl get pods --namespace kube-system | grep ^cilium- 
       register: ciliumResult
       ignore_errors: true
       changed_when: false
