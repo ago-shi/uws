@@ -62,10 +62,6 @@
   when: kubeadmInitNode == 'true' and joinExec
   run_once: true
 
-- name: debug k8s join command2
-  debug:
-    msg: "{{ kubeadmJoin }}"
-
 - name: exec "kubeadm join" on master node
   ansible.builtin.command:
     cmd: "{{ kubeadmJoin }} --control-plane --certificate-key {{ k8sCertKey }}"
@@ -98,5 +94,5 @@
   loop: "{{ linuxUsers }}"
 
 # 任意のCNIを利用できるようにCNIインストールはtaskを切り出し。
-# - name: CNI=cilium install
-#  ansible.builtin.import_tasks: cilium.yml
+- name: CNI=cilium install
+  ansible.builtin.import_tasks: cilium.yml
