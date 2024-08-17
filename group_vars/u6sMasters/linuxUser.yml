@@ -5,6 +5,7 @@ defaultLinuxUsers:
   update_password: on_create
   auth:
     kubectl: false
+    ansible: false
 
 linuxUsers:
   - name: kubeope
@@ -17,3 +18,4 @@ linuxUsers:
     state: present
     auth:
       kubectl: true
+      ansible: true

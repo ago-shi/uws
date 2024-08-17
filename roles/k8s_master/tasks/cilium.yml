@@ -11,71 +11,81 @@
   ansible.builtin.uri:
     url: "{{ k8s.cni.cilium.CLI.latestVer }}"
     return_content: true
-  register: ciliumCliVer
-  # run_once: true
+  register: ciliumCli
   when: ciliumChk.rc != 0
+  run_once: true
 
-- name: Set fact cpu architecture
+- name: apply cilium-cli version at all master node
   ansible.builtin.set_fact:
-    cpuArch: >
-      {% if ansible_architecture == 'aarch64' %}
-        arm64
-      {% elif ansible_architecture == 'x86_64' %}
-        amd64
-      {% else %}
-        Other
-      {% endif %}
+    ciliumCliVer: "{{ ciliumCli.content }}"
   when: ciliumChk.rc != 0
+  run_once: true
 
-- name: Mold cpuArch fact 
+- name: Install cilium
+  when: ciliumChk.rc != 0
+  block:
+    - name: Set fact cpu architecture
+      ansible.builtin.set_fact:
+        cpuArch: >
+          {% if ansible_architecture == 'aarch64' %}
+            arm64
+          {% elif ansible_architecture == 'x86_64' %}
+            amd64
+          {% else %}
+            Other
+          {% endif %}
+
+    - name: Mold cpuArch fact 
+      ansible.builtin.set_fact:
+        cpuArch: "{{ cpuArch | replace(' ', '') | replace('\n', '') }}"
+
+    - name: Fail if cpu architecture is Other
+      ansible.builtin.fail:
+        msg: "This CPU architecture is not supported."
+      when: cpuArch == 'Other'
+
+    - name: Cilium CLI tarball
+      ansible.builtin.get_url:
+        url: "https://github.com/cilium/cilium-cli/releases/download/{{ ciliumCliVer | replace('\n', '') }}/cilium-linux-{{ cpuArch }}.tar.gz"
+        dest: "/tmp/cilium-linux-{{ cpuArch }}.tar.gz"
+
+    - name: Cilium CLI checksum
+      ansible.builtin.get_url:
+        url: "https://github.com/cilium/cilium-cli/releases/download/{{ ciliumCliVer | replace('\n', '') }}/cilium-linux-{{ cpuArch }}.tar.gz.sha256sum"
+        dest: "/tmp/cilium-linux-{{ cpuArch }}.tar.gz.sha256sum"
+
+    - name: Verify checksum
+      ansible.builtin.command:
+        cmd: sha256sum --check cilium-linux-{{ cpuArch }}.tar.gz.sha256sum
+        chdir: /tmp
+      changed_when: false
+
+    - name: Extract Cilium CLI
+      ansible.builtin.unarchive:
+        src: /tmp/cilium-linux-{{ cpuArch }}.tar.gz
+        dest: "{{ k8s.cni.cilium.CLI.installPath }}"
+        remote_src: true
+        extra_opts: --gzip
+        creates: "{{ k8s.cni.cilium.CLI.installPath }}/cilium"
+
+    - name: Remove tarball and checksum
+      ansible.builtin.file:
+        path: /tmp/cilium-linux-{{ cpuArch }}.tar.gz{{ item }}
+        state: absent
+      changed_when: false
+      loop:
+        - ""
+        - ".sha256sum"
+
+- name: Set fact become_user=ansible exec
   ansible.builtin.set_fact:
-    cpuArch: "{{ cpuArch | replace(' ', '') | replace('\n', '') }}"
-  when: ciliumChk.rc != 0
-
-- name: Fail if cpu architecture is Other
-  ansible.builtin.fail:
-    msg: "This CPU architecture is not supported."
-  when: ciliumChk.rc != 0 and cpuArch == 'Other'
-
-- name: Cilium CLI tarball
-  ansible.builtin.get_url:
-    url: "https://github.com/cilium/cilium-cli/releases/download/{{ ciliumCliVer.content | replace('\n', '') }}/cilium-linux-{{ cpuArch }}.tar.gz"
-    dest: "/tmp/cilium-linux-{{ cpuArch }}.tar.gz"
-  when: ciliumChk.rc != 0
-
-- name: Cilium CLI checksum
-  ansible.builtin.get_url:
-    url: "https://github.com/cilium/cilium-cli/releases/download/{{ ciliumCliVer.content | replace('\n', '') }}/cilium-linux-{{ cpuArch }}.tar.gz.sha256sum"
-    dest: "/tmp/cilium-linux-{{ cpuArch }}.tar.gz.sha256sum"
-  when: ciliumChk.rc != 0
-
-- name: Verify checksum
-  ansible.builtin.command:
-    cmd: sha256sum --check cilium-linux-{{ cpuArch }}.tar.gz.sha256sum
-    chdir: /tmp
-  changed_when: false
-  when: ciliumChk.rc != 0
-
-- name: Extract Cilium CLI
-  ansible.builtin.unarchive:
-    src: /tmp/cilium-linux-{{ cpuArch }}.tar.gz
-    dest: "{{ k8s.cni.cilium.CLI.installPath }}"
-    remote_src: true
-    extra_opts: --gzip
-    creates: "{{ k8s.cni.cilium.CLI.installPath }}/cilium"
-  when: ciliumChk.rc != 0  
-
-- name: Remove tarball and checksum
-  ansible.builtin.file:
-    path: /tmp/cilium-linux-{{ cpuArch }}.tar.gz{{ item }}
-    state: absent
-  changed_when: false
-  loop:
-    - ""
-    - ".sha256sum"
+    becomeUser: "{{ item.name }}"
+  when: item.auth.ansible | default(defaultLinuxUsers.auth.ansible)
+  loop: "{{ linuxUsers }}"
 
 - name: Cilium install on represent master node
   when: kubeadmInitNode == 'true'
+  become_user: "{{ becomeUser }}"
   block:
     - name: Check cilium install status
       ansible.builtin.shell:
@@ -83,7 +93,6 @@
       register: ciliumResult
       ignore_errors: true
       changed_when: false
-      become_user: ansible
 
     - name: Install cilium
       when: ciliumResult.rc != 0
@@ -97,4 +106,3 @@
         - name: cilium install --version {{ ciliumVer.content | regex_replace('^v', '') }}
           ansible.builtin.command:
             cmd: cilium install --version {{ ciliumVer.content | regex_replace('^v', '') }}
-          become_user: ansible
