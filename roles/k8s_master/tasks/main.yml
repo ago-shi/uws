@@ -16,6 +16,11 @@
         group: "{{ k8sFile.kubeVIP.group }}"
         mode: "{{ k8sFile.kubeVIP.mode }}"
 
+- name: Check k8s cluster build status
+  ansible.builtin.stat:
+    path: "{{ k8sFile.adminConf.dest }}"
+  register: k8sAdminConf
+
 - name: Initialize Kubernetes master (represent master node only)
   ansible.builtin.command:
     cmd: >
@@ -23,18 +28,17 @@
       --control-plane-endpoint {{ k8s.network.vhost }}:{{ k8s.network.port}} 
       --pod-network-cidr={{ k8s.network.cidr }} 
       --upload-certs
-    creates: "{{ k8sFile.adminConf.dest }}"
-  when: kubeadmInitNode == 'true'
-
-- name: initialize joinExec variable
-  ansible.builtin.set_fact:
-    joinExec: false
-  run_once: true
+  when: (kubeadmInitNode == 'true') and (not k8sAdminConf)
         
-- name: checking join node exist
+- name: Set initial fact "joinRequired(Exec kubeadm join flag) = false"
   ansible.builtin.set_fact:
-    joinExec: true
-  when: hostvars[item]['kubeadmInitNode'] == 'false'
+    joinRequired: false
+  run_once: true
+
+- name: check kubeadm init exec
+  ansible.builtin.set_fact:
+    joinRequired: true
+  when: (hostvars[item]['kubeadmInitNode'] == 'false') and (not hostvars[item].k8sAdminConf.stat.exists)
   loop: "{{ k8s.master.nodeList }}"
   run_once: true
 
@@ -42,31 +46,31 @@
   ansible.builtin.command: 
     cmd: kubeadm token create --print-join-command
   register: k8sJoin
-  when: kubeadmInitNode == 'true' and joinExec
+  when: (kubeadmInitNode == 'true') and joinRequired
 
 - name: kubeadm join command set
   ansible.builtin.set_fact:
     kubeadmJoin: "{{ k8sJoin.stdout }}"
   run_once: true
-  when: kubeadmInitNode == 'true' and joinExec
+  when: (kubeadmInitNode == 'true') and joinRequired
 
 - name: exec kubeadm init phase upload-certs --upload-certs
   ansible.builtin.command: 
     cmd: kubeadm init phase upload-certs --upload-certs
   register: k8sCertOutput
-  when: kubeadmInitNode == 'true' and joinExec
+  when: (kubeadmInitNode == 'true') and joinRequired
 
 - name: get k8s certs
   ansible.builtin.set_fact:
     k8sCertKey: "{{ k8sCertOutput.stdout_lines[-1] }}"
-  when: kubeadmInitNode == 'true' and joinExec
   run_once: true
-
+  when: (kubeadmInitNode == 'true') and joinRequired
+  
 - name: exec "kubeadm join" on master node
   ansible.builtin.command:
     cmd: "{{ kubeadmJoin }} --control-plane --certificate-key {{ k8sCertKey }}"
     creates: "{{ k8sFile.adminConf.dest }}"
-  when: kubeadmInitNode == 'false' and joinExec
+  when: (kubeadmInitNode == 'false') and joinRequired
 
 # if ubuntu_k8s_setup task does not execute, you need to remove commentout.
 # - name: Add k8s operation User
