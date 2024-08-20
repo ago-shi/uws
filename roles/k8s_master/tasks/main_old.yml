@@ -1,0 +1,154 @@
+---
+# 代表マスターノードフラグ　1台のマスターだけtrue repMaster=true / false
+# kubernetesクラスタビルドtargetフラグ　allノードで検証->statモジュール
+## /etc/kubernetes/admin.confが存在しなかったらk8sClusterbuilded=false
+
+# 代表マスタkubeadm init実行フラグ
+## 代表マスターフラグtrueかつbuildTarget=true
+
+# マスターJoinフラグ　代表マスター以外はtrue masterjoin=true /false
+## kubernetesクラスタビルドfalse かつマスターノードならマスターJoin=true
+
+# ワーカーJoinフラグ 
+## kubernetesクラスタビルドfalse かつワーカーノードならワーカーJoin=true
+
+# 代表マスターノードフラグ　1台のマスターだけtrue repMaster=true / false
+- name: Count kubeadmInitNode=true node
+  ansible.builtin.set_fact:
+    kubeadmInitNodeCnt: "{{ groups[vars['k8s.master.nodeGrp']] |  selectattr('kubeadmInitNode', 'equalto', true) | list }}"
+  run_once: true
+
+- name: Check kubeadmInitNode definition
+  ansible.builtin.fail:
+    msg: "Only one master node can have kubeadmInitNode set to true."
+  when: kubeadmInitNodeCnt | length != 1
+
+# kubernetesクラスタビルドtargetフラグ　allノードで検証->statモジュール
+- name: Build target node search
+  ansible.builtin.stat:
+    path: "{{ k8sFile.kubectlAuth.src }}"
+  register: k8sBuilded
+
+# マスターノードのk8sクラスタjoinフラグ初期化 代表マスターノード以外のマスターノード
+- name: Set fact master node controle plain join required. (initialize)
+  ansible.builtin.set_fact:
+    masterJoinReq: false
+  run_once: true
+
+# マスターノードのk8sクラスタjoinフラグのセット
+- name: Set fact master node controle plain join required. 
+  ansible.builtin.set_fact:
+    masterJoinReq: true
+  when: (hostvars[item]['kubeadmInitNode'] == 'false' | defalt(false)) and (not hostvars[item].k8sBuilded.stat.exists)
+  loop: "{{ groups[vars['k8s.master.nodeGrp']] }}"
+  run_once: true
+
+# ワーカーノードのk8sクラスタjoinフラグ初期化
+- name: Set fact worker node k8s cluster join required. (initialize)
+  ansible.builtin.set_fact:
+    wokerJoinReq: false
+  run_once: true
+
+# ワーカーノードのk8sクラスタjoinフラグセット
+- name: Set fact worker node k8s cluster join required. 
+  ansible.builtin.set_fact:
+    workerJoinReq: true
+  when: not hostvars[item].k8sBuilded.stat.exists
+  loop: "{{ groups[vars['k8s.worker.nodeGrp']] }}"
+  run_once: true
+
+# allノードで実行
+- name: configure {{ etcHosts.dest }}{{ etcHosts.file }}
+  ansible.builtin.template:
+    src: "{{ etcHosts.src }}{{ etcHosts.file }}.j2"
+    dest: "{{ etcHosts.dest }}{{ etcHosts.file }}"
+    owner: "{{ etcHosts.owner }}"
+    group: "{{ etcHosts.group }}"
+    mode: "{{ etcHosts.mode }}"
+
+# マスターノードで実行
+- name: configure {{ k8sFile.kubeVIP.dest }}{{ k8sFile.kubeVIP.file }}
+  ansible.builtin.template:
+    src: "{{ k8sFile.kubeVIP.src }}{{ k8sFile.kubeVIP.file }}.j2"
+    dest: "{{ k8sFile.kubeVIP.dest }}{{ k8sFile.kubeVIP.file }}"
+    owner: "{{ k8sFile.kubeVIP.owner }}"
+    group: "{{ k8sFile.kubeVIP.group }}"
+    mode: "{{ k8sFile.kubeVIP.mode }}"
+  when: vars['k8s.master.nodeGrp'] in group_names
+
+# 代表マスターノードで実行
+- name: Initialize Kubernetes master (represent master node only)
+  ansible.builtin.command:
+    cmd: >
+      kubeadm init 
+      --control-plane-endpoint {{ k8s.network.vhost }}:{{ k8s.network.port}} 
+      --pod-network-cidr={{ k8s.network.cidr }} 
+      --upload-certs
+  when: (kubeadmInitNode == 'true') and (not k8sBuilded.stat.exist)
+        
+# representマスター以外のマスターノード・ワーカーノードの1台以上がjoin未済だった場合
+- name: k8s token create on represent master node
+  ansible.builtin.command: 
+    cmd: kubeadm token create --print-join-command
+  register: k8sJoin
+  when: (kubeadmInitNode == 'true' | default(false)) and (masterJoinReq or workerJoinReq)
+
+- name: kubeadm join command set
+  ansible.builtin.set_fact:
+    kubeadmJoin: "{{ k8sJoin.stdout }}"
+  run_once: true
+  when: (kubeadmInitNode == 'true' | default(false)) and (masterJoinReq or workerJoinReq)
+
+# representマスター以外のマスターノードの1台以上がjoin未済だった場合
+- name: exec kubeadm init phase upload-certs --upload-certs
+  ansible.builtin.command: 
+    cmd: kubeadm init phase upload-certs --upload-certs
+  register: k8sCertOutput
+  when: (kubeadmInitNode == 'true' | default(false)) and masterJoinReq
+
+- name: get k8s certs
+  ansible.builtin.set_fact:
+    k8sCertKey: "{{ k8sCertOutput.stdout_lines[-1] }}"
+  run_once: true
+  when: (kubeadmInitNode == 'true' | default(false)) and masterJoinReq
+
+- name: exec "kubeadm join" on master node
+  ansible.builtin.command:
+    cmd: "{{ kubeadmJoin }} --control-plane --certificate-key {{ k8sCertKey }}"
+  when: (kubeadmInitNode != 'true' | default(true)) and (not k8sBuilded) and (vars['k8s.master.nodeGrp'] in group_names)
+
+- name: exec "kubeadm join" on worker node
+  ansible.builtin.command:
+    cmd: "{{ kubeadmJoin }}"
+  when: (kubeadmInitNode != 'true' | default(true)) and (not k8sBuilded) and (vars['k8s.worker.nodeGrp'] in group_names)
+
+# if ubuntu_k8s_setup task does not execute, you need to remove commentout.
+# - name: Add k8s operation User
+#   ansible.builtin.import_tasks: roles/ubuntuBasicSetup/tasks/user.yml
+#   when vars['k8s.master.nodeGrp'] in group_names
+
+- name: make directory (/home/targetUser/.kube)
+  ansible.builtin.file:
+    path: /home/{{ item.name }}/.kube
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+  when: item.auth.kubectl  and (vars['k8s.master.nodeGrp'] in group_names)
+  loop: "{{ linuxUsers }}"
+
+- name: Add kubectl authority
+  ansible.builtin.shell: |
+    if [ ! -f /home/{{ item.name }}/.kube/{{ k8sFile.kubectlAuth.file }} ] || ! cmp -s {{ k8sFile.kubectlAuth.src }} /home/{{ item.name }}/.kube/{{ k8sFile.kubectlAuth.file }}; then
+      cp {{ k8sFile.kubectlAuth.src }} /home/{{ item.name }}/.kube/{{ k8sFile.kubectlAuth.file }}
+      chown {{ item.name }}:{{ item.name }} /home/{{ item.name }}/.kube/{{ k8sFile.kubectlAuth.file }}
+      echo /home/{{ item.name }}/.kube/{{ k8sFile.kubectlAuth.file }} is replaced.
+    fi
+  register: confCopyResult
+  changed_when: confCopyResult.stdout != ''
+  when: item.auth.kubectl and (vars['k8s.master.nodeGrp'] in group_names)
+  loop: "{{ linuxUsers }}"
+
+# 任意のCNIを利用できるようにCNIインストールはtaskを切り出し。
+- name: CNI=cilium install
+  ansible.builtin.import_tasks: cilium.yml
+  when: vars['k8s.master.nodeGrp'] in group_names

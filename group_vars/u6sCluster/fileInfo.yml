@@ -1,0 +1,78 @@
+---
+defaultFileSet:
+  src: "group_files/u6s-masters"
+  owner: "root"
+  group: "root"
+  mode: '0644'
+
+cloudInit:
+  file: "cloud-init.disabled"
+  path: "/etc/cloud/"
+
+etcHosts:
+  file: "hosts"
+  src: "group_files/u6s-masters/"
+  dest: "/etc/"
+  owner: "root"
+  group: "root"
+  mode: '0644'
+
+netplan:
+  - file: "01-netcfg.yaml"
+    src: "group_files/u6s-masters/netplan"
+    dest: "/etc/netplan"
+    mode: '0600'
+
+netplanBuiltin:
+  - file: "50-cloud-init.yaml"
+    dest: "/etc/netplan"
+
+modules_loadd:
+  - file: "k8s.conf"
+    src: "group_files/u6s-masters/modules_"
+    dest: "/etc/modules-load.d/"
+    owner: "root"
+    group: "root"
+    mode: '0644'
+
+sysctld:
+  - file: "k8s.conf"
+    src: "group_files/u6s-masters/sysctl_"
+    dest: "/etc/sysctl.d/"
+    owner: "root"
+    group: "root"
+    mode: '0644'
+
+fstabFile:
+  file: "fstab"
+  src: "group_files/u6s-masters/"
+  dest: "/etc/"
+  owner: "root"
+  group: "root"
+  mode: '0644'
+
+k8sFile:
+  kubeVIP:
+    file: "kube-vip.yaml"
+    src: "group_files/u6s-masters/"
+    dest: "/etc/kubernetes/manifests/"
+    owner: "root"
+    group: "root"
+    mode: '0600'
+  adminConf:
+    src: null # 自動生成
+    dest: "/etc/kubernetes/admin.conf"
+    mode: '0600'
+  kubectlAuth:
+    file: "config"
+    src: "/etc/kubernetes/admin.conf"
+    # dest: "/home/(target user)/.kube" -> group_vars/u6sMasters/linuxUser.yml
+    # owner: (target user) -> group_vars/u6sMasters/linuxUser.yml
+    # group: (target user) -> group_vars/u6sMasters/linuxUser.yml
+    mode: '0600'
+
+# chronyService:
+# -> group_vars/u6sMasters/systemd.yml
+
+# containerdService:
+# -> group_vars/u6sMasters/systemd.yml

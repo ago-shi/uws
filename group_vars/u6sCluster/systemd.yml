@@ -1,0 +1,14 @@
+---
+containerdService:
+  serviceName: containerd.service
+  state: started
+  enabled: true
+  configPath: "/etc/containerd/"
+  configFile: "config.toml"
+
+chronyService:
+  serviceName: chrony.service
+  state: started
+  enabled: true
+  configPath: "/etc/chrony"
+  configFile: "chrony.conf"
