@@ -60,7 +60,7 @@
       --control-plane-endpoint {{ k8s.network.vhost }}:{{ k8s.network.port}} 
       --pod-network-cidr={{ k8s.network.cidr }} 
       --upload-certs
-  when: (inventory_hostname == k8s.master.repNode) and (not k8sBuilded.stat.exist)
+  when: (inventory_hostname == k8s.master.repNode) and (not k8sBuilded.stat.exists)
         
 # representマスター以外のマスターノード・ワーカーノードの1台以上がjoin未済だった場合
 - name: k8s token create on represent master node
@@ -91,12 +91,12 @@
 - name: exec "kubeadm join" on master node
   ansible.builtin.command:
     cmd: "{{ kubeadmJoin }} --control-plane --certificate-key {{ k8sCertKey }}"
-  when: (inventory_hostname != k8s.master.repNode) and (not k8sBuilded.stat.exist) and (k8s.master.nodeGrp in group_names)
+  when: (inventory_hostname != k8s.master.repNode) and (not k8sBuilded.stat.exists) and (k8s.master.nodeGrp in group_names)
 
 - name: exec "kubeadm join" on worker node
   ansible.builtin.command:
     cmd: "{{ kubeadmJoin }}"
-  when: (not k8sBuilded.stat.exist) and (k8s.worker.nodeGrp in group_names)
+  when: (not k8sBuilded.stat.exists) and (k8s.worker.nodeGrp in group_names)
 
 # if ubuntu_k8s_setup task does not execute, you need to remove commentout.
 # - name: Add k8s operation User
