@@ -1,7 +1,12 @@
 ---
 k8s:
+  cluster:
+    nodeGrp: u6sCluster
   master:
-    nodeList: "{{ groups['u6sMasters'] }}"
+    nodeGrp: u6sMasters
+    repNode: u6s-master01 # kubeadm init実行ノード
+  worker:
+    nodeGrp: u6sWorkers
   network:
     vhost: u6s-master
     port: '6443'

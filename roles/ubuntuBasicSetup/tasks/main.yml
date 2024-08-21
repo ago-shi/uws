@@ -1,7 +1,8 @@
 ---
-# aptキャッシュupdate & upgrade
-# 基本パッケージのインストール
+# cloud-init無効か
 # タイムゾーン設定
+# aptキャッシュupdate & upgrade
+# パッケージのインストール
 # 時刻同期設定
 # ネットワーク設定
 # ユーザ設定
@@ -16,6 +17,15 @@
 - name: timezone setup to "{{ datetime_timezone }}"
   community.general.timezone:
     name: "{{ datetime_timezone }}"
+
+- name: Update apt cache ans apt upgrade
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: full
+    purge: true
+
+- name: install packages
+  ansible.builtin.import_tasks: apt.yml
 
 - name: configure Chrony
   ansible.builtin.template:
@@ -33,15 +43,6 @@
     enabled: true
   when: chronyUpdate.changed
 
-- name: Update apt cache ans apt upgrade
-  ansible.builtin.apt:
-    update_cache: true
-    upgrade: full
-    purge: true
-
-- name: install packages
-  ansible.builtin.import_tasks: apt.yml
-
 - name: Rename builtin netplan file 
   block:
   - name: configure network (check currnet netplan filename)
@@ -51,9 +52,9 @@
     loop: "{{ netplanBuiltin }}"
 
   - name: Rename netplan file
-    ansible.builtin.command: mv "{{ item.dest }}/{{ item.file }}" "{{ item.dest }}/{{ item.file }}.org"
-    when: item.stat.exists
-    loop: "{{ file_stat.results }}"
+    ansible.builtin.command: mv "{{ item.1.dest }}/{{ item.1.file }}" "{{ item.1.dest }}/{{ item.1.file }}.org"
+    when: item.0.stat.exists
+    loop: "{{ file_stat.results | product(netplanBuiltin) }}"
 
 - name: configure network (transfer netplan file)
   ansible.builtin.template:

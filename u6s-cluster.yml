@@ -1,3 +1,11 @@
 ---
-- import_playbook: u6s-masters.yml
-- import_playbook: u6s-workers.yml
+- name: Deploy kubernetes cluster for u6s
+  hosts: u6sCluster
+  become: true
+  roles:
+    - role: ubuntuBasicSetup
+      tags: ubuntuBasicSetup
+    - role: linuxK8sSetup
+      tags: linuxK8sSetup
+    - role: linuxK8sBuild
+      tags: linuxK8sBuild

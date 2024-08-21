@@ -19,20 +19,11 @@ aptPackages:
     aptkey: true
     addrepo: true
     hold: true
-  - name: kubectl
-    state: present
-    aptkey: true
-    addrepo: true
-    hold: true
   - name: kubelet
     state: present
     aptkey: true
     addrepo: true
-    hold: true 
-  - name: helm
-    state: present
-    aptkey: true
-    addrepo: true
+    hold: true
 
 aptPackageDefault:
   state: present
@@ -41,29 +32,21 @@ aptPackageDefault:
   hold: false
 
 aptKey:
-  - name: kubeadm/kubectl/kubelet
+  - name: kubeadm/kubelet
     downloadURL: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/"
     downloadKey: "Release.key"
     ascFile: "kubernetes-apt-keyring.asc"
     gpgFile: "kubernetes-apt-keyring.gpg"
 
-  - name: helm
-    downloadURL: "https://baltocdn.com/helm/"
-    downloadKey: "signing.asc"
-    ascFile: "helm-apt-keyring.asc"
-    gpgFile: "helm-apt-keyring.gpg"
-
 aptKeyDefault:
   dirPath: "/etc/apt/keyrings/"
 
 aptRepo:
-  - name: kubeadm/kubectl/kubelet
+  - name: kubeadm/kubelet
     file: "kubernetes.list"
-  - name: helm
-    file: "helm.list"
 
 aptRepoDefault:
-  src: "group_files/u6s-masters/repoList/"
+  src: "group_files/u6sWorkers/repoList/"
   dest: "/etc/apt/sources.list.d/"
   owner: root
   group: root

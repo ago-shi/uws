@@ -1,6 +1,6 @@
 ---
 defaultFileSet:
-  src: "group_files/u6sMasters"
+  src: "group_files/u6sWorkers"
   owner: "root"
   group: "root"
   mode: '0644'
@@ -52,20 +52,13 @@ fstabFile:
   mode: '0644'
 
 k8sFile:
-  kubeVIP:
-    file: "kube-vip.yaml"
-    src: "group_files/u6sMasters/"
-    dest: "/etc/kubernetes/manifests/"
-    owner: "root"
-    group: "root"
-    mode: '0600'
   adminConf:
     src: null # 自動生成
     dest: "/etc/kubernetes/admin.conf"
     mode: '0600'
   kubectlAuth:
     file: "config"
-    src: "/etc/kubernetes/admin.conf"
+    src: "/etc/kubernetes/kubelet.conf"
     # dest: "/home/(target user)/.kube" -> group_vars/u6sMasters/linuxUser.yml
     # owner: (target user) -> group_vars/u6sMasters/linuxUser.yml
     # group: (target user) -> group_vars/u6sMasters/linuxUser.yml
