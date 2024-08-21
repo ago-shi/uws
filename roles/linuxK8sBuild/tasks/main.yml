@@ -15,8 +15,8 @@
 - name: Set fact master node controle plain join required. 
   ansible.builtin.set_fact:
     masterJoinReq: true
-  when: (inventory_hostname != vars['k8s.master.repNode']) and (not hostvars[item].k8sBuilded.stat.exists)
-  loop: "{{ groups[vars['k8s.master.nodeGrp']] }}"
+  when: (inventory_hostname != k8s.master.repNode) and (not hostvars[item].k8sBuilded.stat.exists)
+  loop: "{{ groups[k8s.master.nodeGrp] }}"
   run_once: true
 
 # ワーカーノードのk8sクラスタjoinフラグ初期化
@@ -30,7 +30,7 @@
   ansible.builtin.set_fact:
     workerJoinReq: true
   when: not hostvars[item].k8sBuilded.stat.exists
-  loop: "{{ groups[vars['k8s.worker.nodeGrp']] }}"
+  loop: "{{ groups[k8s.worker.nodeGrp] }}"
   run_once: true
 
 # allノードで実行
