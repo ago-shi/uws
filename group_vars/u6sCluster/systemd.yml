@@ -3,6 +3,7 @@ containerdService:
   serviceName: containerd.service
   state: started
   enabled: true
+  src: "group_files/u6sCluster"
   configPath: "/etc/containerd/"
   configFile: "config.toml"
 
