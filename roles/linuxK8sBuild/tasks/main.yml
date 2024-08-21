@@ -91,12 +91,12 @@
 - name: exec "kubeadm join" on master node
   ansible.builtin.command:
     cmd: "{{ kubeadmJoin }} --control-plane --certificate-key {{ k8sCertKey }}"
-  when: (inventory_hostname != vars['k8s.master.repNode']) and (not k8sBuilded) and (vars['k8s.master.nodeGrp'] in group_names)
+  when: (inventory_hostname != vars['k8s.master.repNode']) and (not k8sBuilded.stat.exist) and (vars['k8s.master.nodeGrp'] in group_names)
 
 - name: exec "kubeadm join" on worker node
   ansible.builtin.command:
     cmd: "{{ kubeadmJoin }}"
-  when: not k8sBuilded and (vars['k8s.worker.nodeGrp'] in group_names)
+  when: (not k8sBuilded.stat.exist) and (vars['k8s.worker.nodeGrp'] in group_names)
 
 # if ubuntu_k8s_setup task does not execute, you need to remove commentout.
 # - name: Add k8s operation User
