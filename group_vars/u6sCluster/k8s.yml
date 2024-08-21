@@ -6,7 +6,7 @@ k8s:
     nodeGrp: u6sMasters
     repNode: u6s-master01 # kubeadm init実行ノード
   worker:
-    nodeGrp: u6sWokers
+    nodeGrp: u6sWorkers
   network:
     vhost: u6s-master
     port: '6443'
