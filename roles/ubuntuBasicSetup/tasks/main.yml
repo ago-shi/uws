@@ -52,9 +52,9 @@
     loop: "{{ netplanBuiltin }}"
 
   - name: Rename netplan file
-    ansible.builtin.command: mv "{{ item.dest }}/{{ item.file }}" "{{ item.dest }}/{{ item.file }}.org"
-    when: item.stat.exists
-    loop: "{{ file_stat.results }}"
+    ansible.builtin.command: mv "{{ item.1.dest }}/{{ item.1.file }}" "{{ item.1.dest }}/{{ item.1.file }}.org"
+    when: item.0.stat.exists
+    loop: "{{ file_stat.results | product(netplanBuiltin) }}"
 
 - name: configure network (transfer netplan file)
   ansible.builtin.template:
