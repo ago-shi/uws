@@ -22,7 +22,7 @@
 # ワーカーノードのk8sクラスタjoinフラグ初期化
 - name: Set fact worker node k8s cluster join required. (initialize)
   ansible.builtin.set_fact:
-    wokerJoinReq: false
+    workerJoinReq: false
   run_once: true
 
 # ワーカーノードのk8sクラスタjoinフラグセット
@@ -109,7 +109,7 @@
     state: directory
     owner: "{{ item.name }}"
     group: "{{ item.name }}"
-  when: item.auth.kubectl  and (k8s.master.nodeGrp in group_names)
+  when: (item.auth.kubectl | default(false)) and (k8s.master.nodeGrp in group_names)
   loop: "{{ linuxUsers }}"
 
 - name: Add kubectl authority
@@ -121,7 +121,7 @@
     fi
   register: confCopyResult
   changed_when: confCopyResult.stdout != ''
-  when: item.auth.kubectl and (k8s.master.nodeGrp in group_names)
+  when: (item.auth.kubectl | default(false)) and (k8s.master.nodeGrp in group_names)
   loop: "{{ linuxUsers }}"
 
 # 任意のCNIを利用できるようにCNIインストールはtaskを切り出し。

@@ -23,7 +23,7 @@
   run_once: true
 
 - name: Install cilium-cli
-  when: ciliumChk.rc != 0 and (k8s.master.nodeGrp in group_names)
+  when: ((ciliumChk.rc | default(0)) != 0) and (k8s.master.nodeGrp in group_names)
   block:
     - name: Set fact cpu architecture
       ansible.builtin.set_fact:
@@ -81,7 +81,7 @@
 - name: Set fact become_user=ansible exec
   ansible.builtin.set_fact:
     becomeUser: "{{ item.name }}"
-  when: (k8s.master.nodeGrp in group_names) and (item.auth.ansible | default(defaultLinuxUsers.auth.ansible))
+  when: (k8s.master.nodeGrp in group_names) and (item.auth.ansible | default(false))
   loop: "{{ linuxUsers }}"
 
 - name: Cilium install on represent master node
