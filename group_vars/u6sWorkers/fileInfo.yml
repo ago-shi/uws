@@ -58,7 +58,7 @@ k8sFile:
     mode: '0600'
   kubectlAuth:
     file: "config"
-    src: "/etc/kubernetes/admin.conf"
+    src: "/etc/kubernetes/kubelet.conf"
     # dest: "/home/(target user)/.kube" -> group_vars/u6sMasters/linuxUser.yml
     # owner: (target user) -> group_vars/u6sMasters/linuxUser.yml
     # group: (target user) -> group_vars/u6sMasters/linuxUser.yml

@@ -81,11 +81,11 @@
 - name: Set fact become_user=ansible exec
   ansible.builtin.set_fact:
     becomeUser: "{{ item.name }}"
-  when: (k8s.master.nodeGrp in group_name) and (item.auth.ansible | default(defaultLinuxUsers.auth.ansible))
+  when: (k8s.master.nodeGrp in group_names) and (item.auth.ansible | default(defaultLinuxUsers.auth.ansible))
   loop: "{{ linuxUsers }}"
 
 - name: Cilium install on represent master node
-  when: inventory_hostname == vars['k8s.master.repNode']
+  when: inventory_hostname == k8s.master.repNode
   become_user: "{{ becomeUser }}"
   block:
     - name: Check cilium install status
