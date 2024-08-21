@@ -1,6 +1,0 @@
----
-datetime_timezone: "Asia/Tokyo"
-
-# 時刻同期先
-ntpServers: 
-  - "ntp.nict.jp"

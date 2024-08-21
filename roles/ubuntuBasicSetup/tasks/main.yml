@@ -1,9 +1,9 @@
 ---
 # cloud-init無効か
 # タイムゾーン設定
-# 時刻同期設定
 # aptキャッシュupdate & upgrade
 # パッケージのインストール
+# 時刻同期設定
 # ネットワーク設定
 # ユーザ設定
 
@@ -17,6 +17,15 @@
 - name: timezone setup to "{{ datetime_timezone }}"
   community.general.timezone:
     name: "{{ datetime_timezone }}"
+
+- name: Update apt cache ans apt upgrade
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: full
+    purge: true
+
+- name: install packages
+  ansible.builtin.import_tasks: apt.yml
 
 - name: configure Chrony
   ansible.builtin.template:
@@ -33,15 +42,6 @@
     state: restarted
     enabled: true
   when: chronyUpdate.changed
-
-- name: Update apt cache ans apt upgrade
-  ansible.builtin.apt:
-    update_cache: true
-    upgrade: full
-    purge: true
-
-- name: install packages
-  ansible.builtin.import_tasks: apt.yml
 
 - name: Rename builtin netplan file 
   block:

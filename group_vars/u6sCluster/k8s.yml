@@ -4,7 +4,7 @@ k8s:
     nodeGrp: u6sCluster
   master:
     nodeGrp: u6sMasters
-    repNode: u6s-master01
+    repNode: u6s-master01 # kubeadm init実行ノード
   worker:
     nodeGrp: u6sWokers
   network:
