@@ -1,6 +1,6 @@
 network:
   ethernets:
-    eth0:
+    {{ ansible_default_ipv4.interface | string }}:
       dhcp4: false
       addresses: 
         - {{ ansible_host }}/24
