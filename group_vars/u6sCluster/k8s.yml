@@ -18,3 +18,7 @@ k8s:
         installPath: "/usr/local/bin"
       cilium:
         latestVer: "https://raw.githubusercontent.com/cilium/cilium/main/stable.txt"
+
+# initial value (Do not change)
+masterJoineReq: false
+workerJoineReq: false

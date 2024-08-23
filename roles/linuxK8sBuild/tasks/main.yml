@@ -1,38 +1,4 @@
 ---
-# kubernetesクラスタビルドtargetフラグ　allノードで検証->statモジュール
-- name: Build target node search
-  ansible.builtin.stat:
-    path: "{{ k8sFile.kubectlAuth.src }}"
-  register: k8sBuilded
-
-# マスターノードのk8sクラスタjoinフラグ初期化 代表マスターノード以外のマスターノード
-- name: Set fact master node controle plain join required. (initialize)
-  ansible.builtin.set_fact:
-    masterJoinReq: false
-  run_once: true
-
-# マスターノードのk8sクラスタjoinフラグのセット
-- name: Set fact master node controle plain join required. 
-  ansible.builtin.set_fact:
-    masterJoinReq: true
-  when: (inventory_hostname != k8s.master.repNode) and (not hostvars[item].k8sBuilded.stat.exists)
-  loop: "{{ groups[k8s.master.nodeGrp] }}"
-  run_once: true
-
-# ワーカーノードのk8sクラスタjoinフラグ初期化
-- name: Set fact worker node k8s cluster join required. (initialize)
-  ansible.builtin.set_fact:
-    workerJoinReq: false
-  run_once: true
-
-# ワーカーノードのk8sクラスタjoinフラグセット
-- name: Set fact worker node k8s cluster join required. 
-  ansible.builtin.set_fact:
-    workerJoinReq: true
-  when: not hostvars[item].k8sBuilded.stat.exists
-  loop: "{{ groups[k8s.worker.nodeGrp] }}"
-  run_once: true
-
 # allノードで実行
 - name: configure {{ etcHosts.dest }}{{ etcHosts.file }}
   ansible.builtin.template:
@@ -52,6 +18,12 @@
     mode: "{{ k8sFile.kubeVIP.mode }}"
   when: k8s.master.nodeGrp in group_names
 
+# kubernetesクラスタビルドtargetフラグ　allノードで検証->statモジュール
+- name: Build target node search
+  ansible.builtin.stat:
+    path: "{{ k8sFile.kubectlAuth.src }}"
+  register: k8sBuilded
+
 # 代表マスターノードで実行
 - name: Initialize Kubernetes master (represent master node only)
   ansible.builtin.command:
@@ -61,7 +33,69 @@
       --pod-network-cidr={{ k8s.network.cidr }} 
       --upload-certs
   when: (inventory_hostname == k8s.master.repNode) and (not k8sBuilded.stat.exists)
-        
+
+# 代表ノードで実行
+- name: kubectl get nodes
+  ansible.builtin.command: kubectl get nodes --namespace default
+  register: k8sNodeList
+  when: inventory_hostname == k8s.master.repNode
+  changed_when: false
+
+- name: Convert k8sNodeList.stdout_lines to 2D array
+  ansible.builtin.set_fact:
+    k8sNodeArray: "{{ k8sNodeList.stdout_lines[1:] | map('split') | list }}"
+  when: inventory_hostname == k8s.master.repNode
+  run_once: true
+
+#######
+- name: cluster join flag(initialize)
+  ansible.builtin.set_fact:
+    k8sFlags: "{{ k8sFlags | default({}) | combine({(item) : {'clusterJoined' : false, 'controlPlane' : false}})}}"
+  loop: "{{ groups[k8s.cluster.nodeGrp] }}"
+  run_once: true
+
+- name: cluster joined flag (set flag)
+  ansible.builtin.set_fact: 
+    k8sFlags: "{{ k8sFlags | combine({(item.0) : {'clusterJoined' : true, 'controlPlane' : (item.1.2 == 'control-plane') }}) }}"
+      when: item.0 == item.1.0
+      loop: "{{ groups[k8s.cluster.nodeGrp] | product(nodes_array) }}"
+      run_once: true
+
+- name: check node role ~control-plane or not~
+  ansible.builtin.fail: 
+    msg: "control-planeになるべきノードがワーカーノードになっています。"
+  when: k8sFlags[item].clusterJoined and (not k8sFlags[item].controlPlane)
+  loop: "{{ groups[k8s.master.nodeGrp] }}"
+
+- name: check node role ~worker or not~
+  ansible.builtin.fail: 
+    msg: "ワーカーになるべきノードがcontrol-planeになっています。"
+  when: k8sFlags[item].clusterJoined and k8sFlags[item].controlPlane
+  loop: "{{ groups[k8s.worker.nodeGrp] }}"
+
+- name: check stray node exist
+  ansible.builtin.debug:
+    msg: "<<警告>> {{ item.0 }}はansibleで管理されていないノードです。k8sクラスターにjoinされてますので妥当性を確認してください。playbookは続行します。"
+  when: item.0 not in groups[k8s.cluster.nodeGrp]
+  loop: "{{ nodes_array }}"
+  run_once: true
+
+- name: master join require check
+  ansible.builtin.set_fact: 
+    masterJoinReq: true
+  when: not k8sFlags[item].controlPlane
+  loop: "{{ groups[k8s.master.nodeGrp] }}"
+  run_once: true
+
+- name: worker join require check
+  ansible.builtin.set_fact: 
+    workerJoinReq: true
+  when: not k8sFlagList[item].clusterJoined
+  loop: "{{ groups[k8s.worker.nodeGrp] }}"
+  run_once: true
+
+#######
+
 # representマスター以外のマスターノード・ワーカーノードの1台以上がjoin未済だった場合
 - name: k8s token create on represent master node
   ansible.builtin.command: 
@@ -91,12 +125,12 @@
 - name: exec "kubeadm join" on master node
   ansible.builtin.command:
     cmd: "{{ kubeadmJoin }} --control-plane --certificate-key {{ k8sCertKey }}"
-  when: (inventory_hostname != k8s.master.repNode) and (not k8sBuilded.stat.exists) and (k8s.master.nodeGrp in group_names)
+  when: (inventory_hostname != k8s.master.repNode) and (not k8sFlags.inventory_hostname.clusterJoined) and (not k8sFlags.inventory_hostname.controlPlane) and (k8s.master.nodeGrp in group_names)
 
 - name: exec "kubeadm join" on worker node
   ansible.builtin.command:
     cmd: "{{ kubeadmJoin }}"
-  when: (not k8sBuilded.stat.exists) and (k8s.worker.nodeGrp in group_names)
+  when: (not k8sFlags.inventory_hostname.clusterJoined) and (k8s.worker.nodeGrp in group_names)
 
 # if ubuntu_k8s_setup task does not execute, you need to remove commentout.
 # - name: Add k8s operation User
