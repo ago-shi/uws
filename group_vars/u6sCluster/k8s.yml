@@ -19,3 +19,11 @@ k8s:
         installPath: "/usr/local/bin"
       cilium:
         latestVer: "https://raw.githubusercontent.com/cilium/cilium/main/stable.txt"
+
+# initialize var
+# 以下はtask内で動的に設定される変数(var)を初期化するためのもの。
+# taskのロジック変更がない限りはこの値は変えてはいけない。
+
+## roles/linuxK8sBuild/tasks/main.yml
+masterJoinReq: false
+workerJoinReq: false
