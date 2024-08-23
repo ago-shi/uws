@@ -5,6 +5,7 @@ k8s:
   master:
     nodeGrp: u6sMasters
     repNode: u6s-master01 # kubeadm init実行ノード
+    kubectlUser: ansible
   worker:
     nodeGrp: u6sWorkers
   network:
