@@ -1,4 +1,0 @@
----
-- name: u6s-master system reboot
-  ansible.builtin.reboot:
-    reboot_timeout: 300

@@ -38,30 +38,27 @@
   ansible.builtin.command: swapoff -a
   when: swap_check.stdout
 
-- name: unmount swap entry
+- name: unmount swap entry and edit /etc/fstab
   ansible.posix.mount:
+    src: "{{ mountPoint.k8s.src }}"
     path: "{{ mountPoint.k8s.path }}"
     state: "{{ mountPoint.k8s.state }}"
+  register: mountExec
 
-- name: check swap file
-  ansible.builtin.stat:
-    path:  "{{ mountPoint.k8s.path }}"
-  register: file_stat
+- name: mount new /etc/fstab
+  ansible.builtin.command:
+    cmd: mount -a
+  when: mountExec.changed
+
+- name: unmount apply (daemon-reload)
+  ansible.builtin.command:
+    cmd: systemctl daemon-reload
+  when: mountExec.changed
 
 - name: remove swap file
   ansible.builtin.file:
     path: "{{ mountPoint.k8s.path }}"
     state: absent
-  when: file_stat.stat.exists
-
-- name: configure fstab
-  ansible.builtin.template:
-    src: "{{ fstabFile.src }}{{ fstabFile.file }}.j2"
-    dest: "{{ fstabFile.dest }}{{ fstabFile.file }}"
-    owner: "{{ fstabFile.owner }}"
-    group: "{{ fstabFile.group }}"
-    mode: "{{ fstabFile.mode }}"
-  notify: u6s-master system reboot
 
 - name: configure /etc/hosts
   ansible.builtin.template:
@@ -71,49 +68,6 @@
     group: "{{ etcHosts.group }}"
     mode: "{{ etcHosts.mode }}"
 
-# if ubuntu_k8s_setup task does not execute, you need to remove commentout.
-# - name: install containerd runtime and k8s app
-#   ansible.builtin.import_tasks: roles/ubuntuBasicSetup/tasks/apt.yml
-
-- name: configure countainerd
-  block:
-    - name: make directory ({{ containerdService.configPath }})
-      ansible.builtin.file:
-        path: "{{ containerdService.configPath }}"
-        state: directory
-
-    - name: make containerd /tmp/{{ containerdService.configFile }}
-      ansible.builtin.shell: | 
-        containerd config default | sudo tee /tmp/{{ containerdService.configFile }} && 
-        sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /tmp/{{ containerdService.configFile }} && 
-        sudo sed -i 's#sandbox_image = "registry.k8s.io/pause:3.6"#sandbox_image = "registry.k8s.io/pause:3.9"#g' /tmp/{{ containerdService.configFile }}
-      changed_when: false
-
-    - name: Replace {{ containerdService.configFile }}
-      ansible.builtin.shell: |
-        if [ ! -f {{ containerdService.configPath }}{{ containerdService.configFile }} ] || ! cmp -s /tmp/{{ containerdService.configFile }} {{ containerdService.configPath }}{{ containerdService.configFile }}; then
-          cp /tmp/{{ containerdService.configFile }} {{ containerdService.configPath }}{{ containerdService.configFile }}
-          echo {{ containerdService.configFile}} is replaced.
-        fi
-      register: confCopyResult
-      changed_when: confCopyResult.stdout != ''
-
-    - name: debug
-      ansible.builtin.debug: 
-        msg: "{{ confCopyResult.stdout }}"
-
-    - name: Remove /tmp/{{ containerdService.configFile }}
-      ansible.builtin.file:
-        name: /tmp/{{ containerdService.configFile }}
-        state: absent
-      changed_when: false
-
-    - name: "{{ containerdService.serviceName }} daemon-reload"
-      ansible.builtin.command: |
-        systemctl daemon-reload
-      when: confCopyResult.stdout != ''
-
-    - name: containerd enabled
-      ansible.builtin.systemd:
-        name: "{{ containerdService.serviceName }}"
-        enabled: "{{ containerdService.enabled }}"
+# コンテナエンジンを指定できるようにセットアップタスクは切り出し。
+- name: configure containerd.service
+  ansible.builtin.import_tasks: containerd.yml

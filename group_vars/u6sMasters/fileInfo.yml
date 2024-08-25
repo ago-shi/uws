@@ -43,14 +43,6 @@ sysctld:
     group: "root"
     mode: '0644'
 
-fstabFile:
-  file: "fstab"
-  src: "group_files/u6sCluster/"
-  dest: "/etc/"
-  owner: "root"
-  group: "root"
-  mode: '0644'
-
 k8sFile:
   kubeVIP:
     file: "kube-vip.yaml"

@@ -21,7 +21,7 @@
 # kubernetesクラスタビルドtargetフラグ　allノードで検証->statモジュール
 - name: Build target node search
   ansible.builtin.stat:
-    path: "{{ k8sFile.kubectlAuth.src }}"
+    path: "{{ k8sFile.adminConf.dest }}"
   register: k8sBuilded
 
 # 代表マスターノードで実行
@@ -58,7 +58,6 @@
   when: inventory_hostname == k8s.master.repNode
   run_once: true
 
-#######
 - name: cluster join flag(initialize)
   ansible.builtin.set_fact:
     k8sFlags: "{{ k8sFlags | default({}) | combine({(item) : {'clusterJoined' : false, 'controlPlane' : false}})}}"

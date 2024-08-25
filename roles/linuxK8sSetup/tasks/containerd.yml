@@ -1,0 +1,41 @@
+---
+# if ubuntu_k8s_setup task does not execute, you need to remove commentout.
+# - name: install containerd runtime and k8s app
+#   ansible.builtin.import_tasks: roles/ubuntuBasicSetup/tasks/apt.yml
+
+- name: make directory ({{ containerdService.configPath }})
+  ansible.builtin.file:
+    path: "{{ containerdService.configPath }}"
+    state: directory
+
+- name: make containerd /tmp/{{ containerdService.configFile }}
+  ansible.builtin.shell: | 
+    containerd config default | sudo tee /tmp/{{ containerdService.configFile }} && 
+    sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /tmp/{{ containerdService.configFile }} && 
+    sudo sed -i 's#sandbox_image = "registry.k8s.io/pause:3.6"#sandbox_image = "registry.k8s.io/pause:3.9"#g' /tmp/{{ containerdService.configFile }}
+  changed_when: false
+
+- name: Replace {{ containerdService.configFile }}
+  ansible.builtin.shell: |
+    if [ ! -f {{ containerdService.configPath }}{{ containerdService.configFile }} ] || ! cmp -s /tmp/{{ containerdService.configFile }} {{ containerdService.configPath }}{{ containerdService.configFile }}; then
+      cp /tmp/{{ containerdService.configFile }} {{ containerdService.configPath }}{{ containerdService.configFile }}
+      echo {{ containerdService.configFile}} is replaced.
+    fi
+  register: confCopyResult
+  changed_when: confCopyResult.stdout != ''
+
+- name: Remove /tmp/{{ containerdService.configFile }}
+  ansible.builtin.file:
+    name: /tmp/{{ containerdService.configFile }}
+    state: absent
+  changed_when: false
+
+- name: "{{ containerdService.serviceName }} daemon-reload"
+  ansible.builtin.command: |
+    systemctl daemon-reload
+  when: confCopyResult.stdout != ''
+
+- name: containerd enabled
+  ansible.builtin.systemd:
+    name: "{{ containerdService.serviceName }}"
+    enabled: "{{ containerdService.enabled }}"
