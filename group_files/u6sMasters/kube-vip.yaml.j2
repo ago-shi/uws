@@ -12,7 +12,7 @@ spec:
     - name: vip_arp
       value: "true"
     - name: port
-      value: {{ k8s.network.port | string }}
+      value: "{{ k8s.network.port | string }}"
     - name: vip_nodename
       valueFrom:
         fieldRef:
@@ -42,7 +42,7 @@ spec:
     - name: vip_retryperiod
       value: "1"
     - name: address
-      value: {{ hostvars['u6s-master']['ansible_host'] | string }}
+      value: "{{ hostvars['u6s-master']['ansible_host'] | string }}"
     - name: prometheus_server
       value: :2112
     image: ghcr.io/kube-vip/kube-vip:v0.8.2

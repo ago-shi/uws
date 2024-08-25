@@ -1,5 +1,6 @@
 ---
-# cloud-init無効か
+# cloud-init無効化
+# hostname設定
 # タイムゾーン設定
 # aptキャッシュupdate & upgrade
 # パッケージのインストール
@@ -13,6 +14,10 @@
     state: touch
     access_time: preserve
     modification_time: preserve
+
+- name: hostname setup name->"{{ inventory_hostname }}"
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
 
 - name: timezone setup to "{{ datetime_timezone }}"
   community.general.timezone:

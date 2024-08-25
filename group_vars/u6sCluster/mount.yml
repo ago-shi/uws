@@ -1,5 +1,6 @@
 ---
 mountPoint:
   k8s:
-    path: "/swap.img"
-    state: "unmounted"
+    src: "/swap.img"
+    path: none
+    state: absent
