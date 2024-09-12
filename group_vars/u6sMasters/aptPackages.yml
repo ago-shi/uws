@@ -1,5 +1,7 @@
 ---
 aptPackages:
+  - name: vim
+    state: present
   - name: chrony
     state: present
   - name: netplan.io
