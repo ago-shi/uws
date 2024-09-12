@@ -6,6 +6,7 @@
 # パッケージのインストール
 # 時刻同期設定
 # ネットワーク設定
+# 信頼できるルート証明書のインストール
 # ユーザ設定
 
 - name: Disable cloud-init
@@ -74,6 +75,25 @@
 - name: netplan apply
   ansible.builtin.command: "netplan apply --debug"
   when: netplanUpdate.results | selectattr('changed', 'equalto', true) | list | length > 0
+
+- name: Copy the CA certificate
+  ansible.builtin.copy:
+    src: "{{ item.src | default(defaultFileSet.src) }}/{{ item.file }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner | default(defaultFileSet.owner) }}"
+    group: "{{ item.group | default(defaultFileSet.group) }}"
+    mode: "{{ item.mode | default(defaultFileSet.mode) }}"
+  loop: "{{ certification }}"
+  register: certCopy
+
+- name: Update the CA certificates
+  ansible.builtin.command: update-ca-certificates
+  when: certCopy.results | selectattr('changed', 'equalto', true) | list | length > 0
+
+- name: Verify the CA certificates are installed
+  ansible.builtin.command: openssl x509 -in "{{ item.dest }}" -text -noout
+  when: item.changed
+  loop: "{{ certCopy.results }}"
 
 - name: import ubuntu_user task
   ansible.builtin.import_tasks: user.yml
