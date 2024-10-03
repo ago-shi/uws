@@ -43,6 +43,11 @@ sysctld:
     group: "root"
     mode: '0644'
 
+certification:
+  - file: pki_root_ca.crt
+    src: "group_files/u6sCluster"
+    dest: "/usr/local/share/ca-certificates"
+
 k8sFile:
   kubeVIP:
     file: "kube-vip.yaml"

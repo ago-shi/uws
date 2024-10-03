@@ -6,6 +6,7 @@
 # パッケージのインストール
 # 時刻同期設定
 # ネットワーク設定
+# 信頼できるルート証明書のインストール
 # ユーザ設定
 
 - name: Disable cloud-init
@@ -74,6 +75,9 @@
 - name: netplan apply
   ansible.builtin.command: "netplan apply --debug"
   when: netplanUpdate.results | selectattr('changed', 'equalto', true) | list | length > 0
+
+- name: import ca certification update task
+  ansible.builtin.import_tasks: caCert.yml
 
 - name: import ubuntu_user task
   ansible.builtin.import_tasks: user.yml

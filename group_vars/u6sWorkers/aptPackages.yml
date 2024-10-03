@@ -26,6 +26,8 @@ aptPackages:
     aptkey: true
     addrepo: true
     hold: true
+  - name: vault
+    state: present
 
 aptPackageDefault:
   state: present
@@ -40,12 +42,20 @@ aptKey:
     ascFile: "kubernetes-apt-keyring.asc"
     gpgFile: "kubernetes-apt-keyring.gpg"
 
+  - name: hashicorp
+    downloadURL: "https://apt.releases.hashicorp.com/"
+    downloadKey: "gpg"
+    ascFile: "hashicorp-archive-keyring.asc"
+    gpgFile: "hashicorp-archive-keyring.gpg"
+
 aptKeyDefault:
   dirPath: "/etc/apt/keyrings/"
 
 aptRepo:
   - name: kubeadm/kubelet
     file: "kubernetes.list"
+  - name: hashicorp
+    file: "hashicorp.list"
 
 aptRepoDefault:
   src: "group_files/u6sWorkers/repoList/"

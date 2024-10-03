@@ -151,3 +151,8 @@
 # 任意のCNIを利用できるようにCNIインストールはtaskを切り出し。
 - name: CNI=cilium install
   ansible.builtin.import_tasks: cilium.yml
+
+# if ubuntu_k8s_setup task does not execute, you need to remove commentout.
+# - name: install ca certification
+#   ansible.builtin.import_task: roles/ubuntuBasicSetup/tasks/caCert.yml
+
