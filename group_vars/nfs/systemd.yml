@@ -18,7 +18,7 @@ firewalld:
   enabled: true
   destConfigDir: "/etc/firewalld"
   configFile: "firewalld.conf"
-  destZoneDirPath: "/etc/firewalld/zones"
+  destZoneDir: "/etc/firewalld/zones"
   zoneFiles:
     - srcFile: "firewalld.public.xml"
       destFile: "public.xml"

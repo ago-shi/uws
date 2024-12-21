@@ -43,7 +43,7 @@
 
 - name: Restart chrony service
   ansible.builtin.systemd:
-    name: chrony
+    name: chronyd
     state: restarted
     enabled: true
   when: chronyUpdate.changed
@@ -52,7 +52,7 @@
 - name: configure zone file
   ansible.builtin.copy:
     src: "{{ firewalld.src | default(systemdDefault.src) }}/{{ item.srcFile }}"
-    dest: "{{ firewalld.destConfigDir }}/{{ item.destFile }}"
+    dest: "{{ firewalld.destZoneDir }}/{{ item.destFile }}"
     owner: "{{ firewalld.item.owner | default(defaultFileSet.owner) }}"
     group: "{{ firewalld.item.group | default(defaultFileSet.group) }}"
     mode: "{{ firewalld.item.mode | default(defaultFileSet.mode) }}"
