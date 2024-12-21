@@ -1,0 +1,79 @@
+---
+# hostname設定
+# タイムゾーン設定
+# dnf キャッシュクリア & upgrade
+# パッケージのインストール
+# 時刻同期
+# firewallの設定
+# selinuxの設定
+# 証明書の信頼ストア設定
+# ユーザ設定
+
+- name: hostname setup name->"{{ inventory_hostname }}"
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: timezone setup to "{{ datetime_timezone }}"
+  community.general.timezone:
+    name: "{{ datetime_timezone }}"
+
+- name: clean dnf cache
+  ansible.builtin.command:
+    cmd: dnf clean all
+  changed_when: false
+
+- name: Update dnf cache and dnf upgrade
+  ansible.builtin.dnf:
+    name: '*'
+    update_cache: true
+    state: latest
+
+- name: install packages
+  ansible.builtin.import_tasks: dnf.yml
+
+# 時刻同期
+- name: configure Chrony
+  ansible.builtin.template:
+    src: "{{ chronyService.src | default(defaultFileSet.src) }}/{{ chronyService.configFile }}.j2"
+    dest: "{{ chronyService.configPath }}/{{ chronyService.configFile }}"
+    owner: "{{ chronyService.owner | default(defaultFileSet.owner) }}"
+    group: "{{ chronyService.group | default(defaultFileSet.group) }}"
+    mode: "{{ chronyService.mode | default(defaultFileSet.mode) }}"
+  register: chronyUpdate
+
+- name: Restart chrony service
+  ansible.builtin.systemd:
+    name: chrony
+    state: restarted
+    enabled: true
+  when: chronyUpdate.changed
+
+# firewallの設定
+- name: configure zone file
+  ansible.builtin.copy:
+    src: "{{ firewalld.src | default(systemdDefault.src) }}/{{ item.srcFile }}"
+    dest: "{{ firewalld.destConfigDir }}/{{ item.destFile }}"
+    owner: "{{ firewalld.item.owner | default(defaultFileSet.owner) }}"
+    group: "{{ firewalld.item.group | default(defaultFileSet.group) }}"
+    mode: "{{ firewalld.item.mode | default(defaultFileSet.mode) }}"
+  loop: "{{ firewalld.zoneFiles }}"
+  register: zoneFileUpdate
+
+- name: firewalld reload
+  ansible.builtin.command:
+    cmd: firewall-cmd --reload
+  when: zoneFileUpdate.results | selectattr('changed', 'equalto', true) | list | length > 0
+
+# selinuxの設定
+- name: set selinux to permissive
+  ansible.posix.selinux:
+    policy: "{{ selinux.policy | default(selinuxDefault.policy) }}"
+    state: "{{ selinux.state | default(selinuxDefault.state) }}"
+
+# 証明書の信頼ストア設定
+- name: import ca certification update task
+  ansible.builtin.import_tasks: caCert.yml
+
+# ユーザ設定
+- name: import almalinux_user task
+  ansible.builtin.import_tasks: user.yml

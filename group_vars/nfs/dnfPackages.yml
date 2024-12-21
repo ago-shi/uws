@@ -1,0 +1,10 @@
+---
+dnfPackages:
+  - name:  policycoreutils-python-utils
+    state: present
+  - name:  chrony
+    state: present
+
+dnfPackageDefault:
+  state: present
+  hold: false

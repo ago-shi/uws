@@ -1,0 +1,15 @@
+---
+defaultLinuxUsers:
+  create_home: yes
+  shell: /bin/bash
+  update_password: on_create
+  auth:
+    kubectl: false
+    ansible: false
+
+linuxUsers:
+  - name: ansible
+    password: "{{ 'P@ssw0rd' | password_hash('sha512') }}"
+    state: present
+    auth:
+      ansible: true

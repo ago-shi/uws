@@ -1,0 +1,24 @@
+---
+systemdDefault:
+  state: started
+  enabled: true
+  src: "group_files/nfs"
+
+chronyService:
+  serviceName: chrony
+  state: started
+  enabled: true
+  src: "group_files/nfs"
+  configPath: "/etc"
+  configFile: "chrony.conf"
+
+firewalld:
+  serviceName: firewalld
+  state: started
+  enabled: true
+  destConfigDir: "/etc/firewalld"
+  configFile: "firewalld.conf"
+  destZoneDirPath: "/etc/firewalld/zones"
+  zoneFiles:
+    - srcFile: "firewalld.public.xml"
+      destFile: "public.xml"

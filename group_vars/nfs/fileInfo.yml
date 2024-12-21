@@ -1,0 +1,17 @@
+---
+defaultFileSet:
+  src: "group_files/nfs"
+  owner: "root"
+  group: "root"
+  mode: '0644'
+
+certification:
+  - file: pki_root_ca.crt
+    src: "group_files/all"
+    dest: "/etc/pki/ca-trust/source/anchors"
+
+# chronyService:
+# -> group_vars/nfs/systemd.yml
+
+# firewalld:
+# -> group_vars/nfs/systemd.yml

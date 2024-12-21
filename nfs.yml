@@ -1,0 +1,7 @@
+---
+- name: Deploy nfs server
+  hosts: nfs
+  become: true
+  roles:
+    - role: almaBasicSetup
+      tags: almaBasicSetup

@@ -45,7 +45,7 @@ sysctld:
 
 certification:
   - file: pki_root_ca.crt
-    src: "group_files/u6sCluster"
+    src: "group_files/all"
     dest: "/usr/local/share/ca-certificates"
 
 k8sFile:

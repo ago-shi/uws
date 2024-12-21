@@ -1,0 +1,8 @@
+---
+- name: dnf package managed
+  ansible.builtin.dnf:
+    name: "{{ item.name }}"
+    state: "{{ item.state | default(dnfPackageDefault.state)}}"
+    update_cache: true
+  loop: "{{ dnfPackages }}"
+  

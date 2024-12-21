@@ -1,0 +1,8 @@
+---
+selinuxDefault:
+  policy: targeted
+  state: disabled
+
+selinux:
+  policy: targeted
+  state: enforcing
