@@ -1,0 +1,52 @@
+---
+- name: include disk partition create tasks
+  ansible.builtin.include_tasks: diskPartitionCreate.yml
+  when: raidConf4Build is defined | default(false) 
+
+
+
+
+
+
+# if you do not execute almaBasicSetup task, you remove this commentout
+# - name: install dnf pakeages
+#   ansible.builtin.import_tasks: roles/almaBasicSetup/tasks/dnf.yml
+
+- name: raid partition fact set(initialize)
+  ansible.builtin.set_fact:
+    raidPartFlag: false 
+    diskPartFlag: false 
+
+- name: Read /proc/mdstat
+  ansible.builtin.slurp:
+    src: /proc/mdstat
+  register: mdstatFile
+
+- name: Decode file content
+  ansible.builtin.set_fact:
+    file_lines: "{{ file_content.content | b64decode | splitlines }}"
+
+- name: Split lines into lists
+  ansible.builtin.set_fact:
+    split_lines: "{{ file_lines | map('split', ' ') | list }}"
+
+- name: Display split lines
+  ansible.builtin.debug:
+    var: split_lines
+
+
+- name: disk info
+  community.general.parted:
+    device: "{{ item }}"
+    state: info
+  loop: "{{ diskRaid.devices }}"
+  register: deviceInfo
+
+- name: check partition exists
+  ansible.builtin.set_fact:
+    partitionExists: "{{ deviceInfo.results | map(attribute='ansible_facts.partitions') | list }}"
+  when: deviceInfo.results | map(attribute='ansible_facts.partitions') | list
+
+
+  ansible.builtin.set_fact:
+    partitions: 

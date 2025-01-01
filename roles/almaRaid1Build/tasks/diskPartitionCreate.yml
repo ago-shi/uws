@@ -1,0 +1,57 @@
+---
+# raid用partitionが存在しないことを確認する。存在していたらエラー終了。
+- name: check disk partition exists. (init)
+  ansible.builtin.set_fact:
+    partExists: false
+
+- name: get disk partition info.
+  ansible.builtin.shell: 
+    cmd: lsblk -l -o NAME | grep {{ item.2.name }}
+  ignore_errors: true
+  changed_when: false
+  loop: "{{ raidConf4Build | subelements('partition') }}"
+  register: partInfo
+
+- name: check disk partition exists.
+  ansible.builtin.set_fact:
+    partExists: true 
+  when: item.rc == 0
+  loop: "{{ partInfo.results }}"
+
+  ## partitionが存在していたらエラー終了 ##
+- name: if partition exists, failed
+  ansible.builtin.fail:
+    msg: "partition already exists."
+  when: partExists | bool
+
+# partitionが存在しないので、partitionを作成する
+- name: create disk partition.
+  community.general.parted:
+    device: "{{ item.1.device }}"
+    number: "{{ item.1.name | regex_replace(item.1.device, '') | int }}"
+    state: present
+    part_end: "{{ item.1.size | default('100%') }}"
+    flags: [ raid ]
+  loop: "{{ raidConf4Build | subelements('partition') }}"
+
+# partition typeを設定する
+#- name: set partition type
+#  ansible.builtin.shell:
+#    cmd: echo -e "t\n{{ item.1.typeHex }}\nw\n" | fdisk /dev/{{ item.device }}
+#  loop: "{{ raidConf4Build | subelements('partition') }}"
+
+- name: check partition type set result
+  ansible.builtin.shell:
+    cmd: lsblk -l -o NAME,FSTYPE | grep {{ item.device }}{{ item.number }}
+  ignore_errors: true
+  changed_when: false
+  loop: "{{ raidPartitions }}"
+  register: partTypeInfo
+
+- name: separate lsblk set
+  ansible.builtin.set_fact:
+    lsblkList: "{{ lsblkList | default([]) + [ item.stdout.split() | list ] }}"
+  loop: "{{ partTypeInfo.results }}"
+
+
+

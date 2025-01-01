@@ -1,0 +1,87 @@
+---
+# raid設定を確認する
+- name: read /proc/mdstat
+  ansible.builtin.slurp: 
+    src: /proc/mdstat
+  register: mdstat
+
+- name: Decode file content
+  set_fact:
+    file_lines: "{{ mdstat.content | b64decode | split('\n') }}"
+
+- name: Split lines into lists
+  set_fact:
+    split_lines: "{{ file_lines | map('split', ' ') | list }}"
+
+- name: Find the index of the list containing 'md0'
+  set_fact:
+    listNum: "{{ split_lines.index(item) }}"
+  loop: "{{ split_lines }}"
+  when: item[0] == raidName
+
+
+
+# raid用partitionが存在しないことを確認する。存在していたらエラー終了。
+- name: partition exists check (init)
+  ansible.builtin.set_fact:
+    partExists: true
+
+- name: get partition info
+  ansible.builtin.shell: 
+    cmd: lsblk -l -o NAME | grep {{ item.device }}{{ item.number }}
+  ignore_errors: true
+  changed_when: false
+  loop: "{{ raidPartitions }}"
+  register: partInfo
+
+- name: partition exists check
+  ansible.builtin.set_fact:
+    partitionExists: false
+  when: item.rc != 0
+  loop: "{{ partInfo.results }}"
+
+  ## partitionが存在していたらエラー終了 ##
+- name: if partition exists, playbook failed
+  ansible.builtin.fail:
+    msg: "partition already exists"
+  when: partitionExists | bool
+
+# partitionが存在しないので、partitionを作成する
+- name: create partition
+  community.general.parted:
+    device: /dev/{{ item.device }}
+    number: "{{ item.number | int }}"
+    state: present
+    part_end: "{{ partitionCommonSet.size | default('100%') }}"
+  loop: "{{ raidPartitions }}"
+
+# partition typeを設定する
+- name: set partition type
+  ansible.builtin.shell:
+    cmd: echo -e "t\n{{ partitionCommonSet.typeHex }}\nw\n" | fdisk /dev/{{ item.device }}
+  loop: "{{ raidPartitions }}"
+
+- name: check partition type set result
+  ansible.builtin.shell:
+    cmd: lsblk -l -o NAME,FSTYPE | grep {{ item.device }}{{ item.number }}
+  ignore_errors: true
+  changed_when: false
+  loop: "{{ raidPartitions }}"
+  register: partTypeInfo
+
+- name: check partition type (init)
+  ansible.builtin.set_fact:
+    lsblkList: []
+    typeValid: true
+
+- name: separate lsblk set
+  ansible.builtin.set_fact:
+    lsblkList: "{{ lsblkList + [ item.stdout.split() | list ] }}"
+  loop: "{{ partTypeInfo.results }}"
+
+- name: check partition type
+  ansible.builtin.set_fact:
+    typeValid: false
+  when: item[1] != partitionCommonSet.typeName
+  loop: "{{ lsblkList }}"
+

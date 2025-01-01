@@ -1,0 +1,38 @@
+---
+raidPartExec: true
+
+raidPartitions:
+  - device: sdb
+    number: 1   # partition number
+  - device: sdc
+    number: 1   # partition number
+
+partitionCommonSet:
+  size: 2GiB  # GiB, MiB, KiB, %, cyl, CHS, or bytes
+              # 全ディスクを使う場合は100%を指定 or コメントアウト
+  typeHex: fd   # fdiskのtコマンドの仕様を確認して指定すること
+  typeName: linux_raid_member
+
+raidConf4Build:
+  - name: /dev/md0
+    size: 2GiB
+    partTypeHex: fd
+    partTypeName: linux_raid_member
+    level: 1
+    format: xfs
+    partition:
+      - device: /dev/sdb
+        name:   /dev/sdb1
+      - device: /dev/sdc
+        name:   /dev/sdc1
+#  - name: md1
+#    size: 2GiB
+#    partTypeHex: fd
+#    partTypeName: linux_raid_member
+#    level: 1
+#    format: xfs
+#    partition:
+#      - device: /dev/sdd
+#        name:   /dev/sdd2
+#      - device: /dev/sde
+#        name:   /dev/sde2

@@ -1,0 +1,25 @@
+---
+diskStructure:
+  /dev/sda:
+    - /dev/sda1
+    - /dev/sda2
+    - /dev/sda3
+  /dev/sdb:         # for RAID1 (full)
+    - /dev/sdb1     # for RAID1 (sdb1 <--> sdc1)
+  /dev/sdc:         # for RAID1 (full)
+    - /dev/sdc1     # for RAID1 (sdb1 <--> sdc1)
+
+diskRaid:
+- raidName: md0
+  level: 1
+  devices:
+    - "/dev/sdb"
+    - "/dev/sdc"
+  partition:
+    /dev/sdb1:
+      begin: 
+    - "/dev/sdc1"
+  size: 1TB
+  fsType: xfs
+  mountpoint: "/mnt"
+

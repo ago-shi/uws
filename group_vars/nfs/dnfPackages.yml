@@ -1,9 +1,9 @@
 ---
 dnfPackages:
-  - name:  policycoreutils-python-utils
-    state: present
-  - name:  chrony
-    state: present
+  - name: policycoreutils-python-utils
+  - name: chrony
+  - name: mdadm
+  - name: nfs-utils   
 
 dnfPackageDefault:
   state: present
