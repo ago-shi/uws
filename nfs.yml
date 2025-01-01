@@ -5,3 +5,5 @@
   roles:
     - role: almaBasicSetup
       tags: almaBasicSetup
+    - role: almaRaid1Build
+      tags: almaRaid1Build

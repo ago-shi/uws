@@ -15,4 +15,39 @@
     (raid1BuildReq | default(false)) or 
     (raidConf4Build is defined | default(false))
 
+# raid構成を確認する
+- name: raid configre check. (cat /proc/mdstat)
+  ansible.builtin.command: cat /proc/mdstat
+  register: catMdstat
+  changed_when: false
 
+- name: raid configre check. (split lines)
+  ansible.builtin.set_fact:
+    split_lines: "{{ catMdstat.stdout_lines | map('split', ' ') | list }}"
+
+- name: raid configre check. (check)
+  ansible.builtin.set_fact:
+    raidExistFlg: true
+  when: item.0.name | basename == item.1.0
+  loop: "{{ raidDevices | product(split_lines) }}"
+
+- name: raid configure check. (exist = playbook failed)
+  ansible.builtin.fail:
+    msg: "raid devices are not exist.(expect: exist)"
+  when: not raidExistFlg is defined
+
+# raidデバイスマウント用ディレクトリの作成
+- name: create directory for raid device mount
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop: "{{ raidDevices | subelements('mountPoint') }}"
+
+# raidデバイスのマウント
+- name: mount raid devices
+  ansible.posix.mount:
+    path: "{{ item.mountPoint }}"
+    src: "{{ item.name }}"
+    fstype: "{{ item.fstype }}"
+    state: "{{ item.state }}"
+  loop: "{{ raidDevices }}"
