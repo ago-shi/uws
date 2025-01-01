@@ -1,28 +1,18 @@
 ---
 # raid用partitionが存在しないことを確認する。存在していたらエラー終了。
-- name: check disk partition exists. (init)
-  ansible.builtin.set_fact:
-    partExists: false
-
 - name: get disk partition info.
   ansible.builtin.shell: 
-    cmd: lsblk -l -o NAME | grep {{ item.2.name }}
+    cmd: lsblk -l -o NAME | grep {{ item.1.name | basename}}
   ignore_errors: true
   changed_when: false
   loop: "{{ raidConf4Build | subelements('partition') }}"
   register: partInfo
 
-- name: check disk partition exists.
-  ansible.builtin.set_fact:
-    partExists: true 
-  when: item.rc == 0
-  loop: "{{ partInfo.results }}"
-
   ## partitionが存在していたらエラー終了 ##
 - name: if partition exists, failed
   ansible.builtin.fail:
     msg: "partition already exists."
-  when: partExists | bool
+  when: not partInfo.failed is defined
 
 # partitionが存在しないので、partitionを作成する
 - name: create disk partition.
@@ -34,24 +24,76 @@
     flags: [ raid ]
   loop: "{{ raidConf4Build | subelements('partition') }}"
 
-# partition typeを設定する
-#- name: set partition type
-#  ansible.builtin.shell:
-#    cmd: echo -e "t\n{{ item.1.typeHex }}\nw\n" | fdisk /dev/{{ item.device }}
-#  loop: "{{ raidConf4Build | subelements('partition') }}"
+# raidの構成を確認する
+- name: cat /proc/mdstat
+  ansible.builtin.shell: cat /proc/mdstat
+  register: catMdstat
+  changed_when: false
 
-- name: check partition type set result
+- name: Split lines into lists
+  ansible.builtin.set_fact:
+    split_lines: "{{ catMdstat.stdout_lines | map('split', ' ') | list }}"
+
+- name: check raid configure exist. (raid device)
+  ansible.builtin.set_fact:
+    raidExist: true
+  when: item.0.name | basename == item.1[0]
+  loop: "{{ raidStructure | product(split_lines) }}"
+
+- name: check raid configure exist. (partition)
   ansible.builtin.shell:
-    cmd: lsblk -l -o NAME,FSTYPE | grep {{ item.device }}{{ item.number }}
+    cmd: cat /proc/mdstat | grep "{{ item.1.name | basename }}\["
+  loop: "{{ raidStructure | subelements('partition') }}"
+  register: raidPartExist
   ignore_errors: true
   changed_when: false
-  loop: "{{ raidPartitions }}"
-  register: partTypeInfo
 
-- name: separate lsblk set
+- name: error exit
+  ansible.builtin.fail:
+    msg: "raid device or partition is already exist."
+  when: (not raidPartExist.failed is defined) or (raidExist is defined)
+
+# raidを構成する。
+- name: create mdadm command set (raid partitions)
   ansible.builtin.set_fact:
-    lsblkList: "{{ lsblkList | default([]) + [ item.stdout.split() | list ] }}"
-  loop: "{{ partTypeInfo.results }}"
+    raidList: >- 
+      {{ raidList | default([]) + [[item.name, item.partition | length,
+       'raid' + item.level | string, 
+       item.partition | map(attribute='name') | join(' ')]] }}
+  loop: "{{ raidConf4Build }}"
+
+  ## ex.[[/dev/md0, 2, raid1, /dev/sda1 /dev/sdb1], [/dev/md1, 2, raid1, /dev/sda2 /dev/sdb2]]
+  ## mdadm --create /dev/md0 --raid-devices=2 --level=raid1 /dev/sda1 /dev/sdb1
+- name: create mdadm command set (raid device)
+  ansible.builtin.command:
+    cmd: >-
+      mdadm --create {{ item.0 }} --raid-devices={{ item.1 }} 
+       --level={{ item.2 }} {{ item.3 }}
+    loop: "{{ raidList }}"
+
+- name: check resync status
+  ansible.builtin.shell:
+    cmd: "cat /proc/mdstat | grep ']  resync ='"
+  register: resyncStatus
+  changed_when: false
+  ignore_errors: true
+  until: resyncStatus.rc != 0
+  retries: 100
+  delay: 10 
+
+# grepの結果をignore_errorsしているが、
+# タイムアウトもignoreされてしまう可能性を考慮してチェックする。
+- name: timeout check
+  ansible.builtin.fail:
+    msg: "resync is taking too long"
+  when: resyncStatus.rc == 0
+
+# raidデバイスをフォーマットする
+#- name: format raid device
+#  ansible.builtin.shell:
+#    cmd: mkfs.ext4 -t {{ item.format }} {{ item.name }}
+#  loop: "{{ raidStructure }}"
+
 
 
 
