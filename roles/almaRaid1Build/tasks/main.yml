@@ -6,13 +6,13 @@
 - name: include disk partition create tasks
   ansible.builtin.include_tasks: diskPartitionCreate.yml
   when: >-
-    (partBuildReq | default(false)) or 
+    (partBuildReq | default(false)) and 
     (raidConf4Build is defined | default(false))
 
 - name: include raid1 build tasks
   ansible.builtin.include_tasks: raid1Build.yml
   when: >-
-    (raid1BuildReq | default(false)) or 
+    (raid1BuildReq | default(false)) and 
     (raidConf4Build is defined | default(false))
 
 # raid構成を確認する
@@ -39,9 +39,9 @@
 # raidデバイスマウント用ディレクトリの作成
 - name: create directory for raid device mount
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ item.mountPoint }}"
     state: directory
-  loop: "{{ raidDevices | subelements('mountPoint') }}"
+  loop: "{{ raidDevices }}"
 
 # raidデバイスのマウント
 - name: mount raid devices
@@ -50,4 +50,5 @@
     src: "{{ item.name }}"
     fstype: "{{ item.fstype }}"
     state: "{{ item.state }}"
+    opts: defaults,nofail
   loop: "{{ raidDevices }}"
