@@ -54,5 +54,5 @@
     fstype: "{{ item.fstype }}"
     state:  "{{ item.state }}"
     opts:   "{{ item.opts }}"
-  loop: "{{ mountPoint.raid1Devices }}"
+  loop: "{{ mountPoint.raid1 }}"
 
