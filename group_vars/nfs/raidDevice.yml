@@ -1,6 +1,0 @@
----
-raidDevices:
-  - name: /dev/md0
-    mountPoint: /mnt/md0
-    fstype: xfs
-    state: present

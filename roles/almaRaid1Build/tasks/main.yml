@@ -39,16 +39,20 @@
 # raidデバイスマウント用ディレクトリの作成
 - name: create directory for raid device mount
   ansible.builtin.file:
-    path: "{{ item.mountPoint }}"
-    state: directory
-  loop: "{{ raidDevices }}"
+    path:  "{{ item.mountPoint }}"
+    state: "{{ item.state | default(defDir.state) }}"
+    owner: "{{ item.owner | default(defDir.owner) }}"
+    group: "{{ item.group | default(defDir.group) }}"
+    mode:  "{{ item.mode  | default(defDir.mode) }}"
+  loop: "{{ mountPoint.raid1Devices }}"
 
 # raidデバイスのマウント
 - name: mount raid devices
   ansible.posix.mount:
-    path: "{{ item.mountPoint }}"
-    src: "{{ item.name }}"
+    path:   "{{ item.path }}"
+    src:    "{{ item.src }}"
     fstype: "{{ item.fstype }}"
-    state: "{{ item.state }}"
-    opts: defaults,nofail
-  loop: "{{ raidDevices }}"
+    state:  "{{ item.state }}"
+    opts:   "{{ item.opts }}"
+  loop: "{{ mountPoint.raid1Devices }}"
+

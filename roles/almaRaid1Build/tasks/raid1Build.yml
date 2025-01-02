@@ -43,9 +43,7 @@
   ## mdadm --create /dev/md0 --raid-devices=2 --level=raid1 /dev/sda1 /dev/sdb1
 - name: create mdadm command set (raid device)
   ansible.builtin.shell:
-    cmd: >-
-      echo -e "y\n" | mdadm --create {{ item.0 }} --raid-devices={{ item.1 }} 
-       --level={{ item.2 }} {{ item.3 }}
+    cmd: echo -e "y\n" | mdadm --create {{ item.0 }} --raid-devices={{ item.1 }} --level={{ item.2 }} {{ item.3 }}
   loop: "{{ raidList }}"
 
 - name: check resync status
@@ -68,7 +66,7 @@
 # raidデバイスをフォーマットする
 - name: format raid device
   ansible.builtin.command:
-    cmd: mkfs.ext4 -t {{ item.format }} {{ item.name }}
+    cmd: mkfs -t {{ item.format }} {{ item.name }}
   loop: "{{ raidConf4Build }}"
 
 # raid設定を保存する
