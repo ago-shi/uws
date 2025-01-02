@@ -28,8 +28,8 @@
 - name: raid configre check. (check)
   ansible.builtin.set_fact:
     raidExistFlg: true
-  when: item.0.name | basename == item.1.0
-  loop: "{{ raidDevices | product(split_lines) }}"
+  when: item.0.src | basename == item.1.0
+  loop: "{{ mountPoint.raid1 | product(split_lines) }}"
 
 - name: raid configure check. (exist = playbook failed)
   ansible.builtin.fail:
@@ -39,12 +39,12 @@
 # raidデバイスマウント用ディレクトリの作成
 - name: create directory for raid device mount
   ansible.builtin.file:
-    path:  "{{ item.mountPoint }}"
+    path:  "{{ item.name }}"
     state: "{{ item.state | default(defDir.state) }}"
     owner: "{{ item.owner | default(defDir.owner) }}"
     group: "{{ item.group | default(defDir.group) }}"
     mode:  "{{ item.mode  | default(defDir.mode) }}"
-  loop: "{{ mountPoint.raid1Devices }}"
+  loop: "{{ directories.mnt }}"
 
 # raidデバイスのマウント
 - name: mount raid devices

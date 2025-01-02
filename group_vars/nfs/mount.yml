@@ -1,6 +1,6 @@
 ---
 mountPoint:
-  raid1Devices:
+  raid1:
   # check -> group_vars/nfs/directory.yml
   - path:   "/mnt/md0"
     src:    "/dev/md0"

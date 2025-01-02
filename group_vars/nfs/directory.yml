@@ -7,5 +7,6 @@ defDir:
 
 directories:
   mnt:
-# - name: /mnt/md0 -> group_vars/nfs/mount.yml
+  # /mnt/md0 -> see group_vars/nfs/mount.yml
+  - name: "/mnt/md0"
   
