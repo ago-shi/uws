@@ -2,6 +2,11 @@
 partBuildReq: true
 raid1BuildReq: true
 
+raidCommonSet:
+  # resyncExpecTime = syncChkRetries * syncChkDelay
+  syncChkRetries: 20   # resync完了チェックのリトライ回数
+  syncChkDelay:   300  # resync完了チェックのリトライ間隔(秒)
+
 raidConf4Build:
   - name: /dev/md0
     size: 100%
@@ -12,12 +17,4 @@ raidConf4Build:
         name:   /dev/sdb1
       - device: /dev/sdc
         name:   /dev/sdc1
-#  - name: md1
-#    size: 2GiB
-#    level: 1
-#    format: xfs
-#    partition:
-#      - device: /dev/sdd
-#        name:   /dev/sdd2
-#      - device: /dev/sde
-#        name:   /dev/sde2
+

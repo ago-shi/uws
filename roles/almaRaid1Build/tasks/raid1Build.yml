@@ -53,8 +53,8 @@
   changed_when: false
   ignore_errors: true
   until: resyncStatus.rc != 0
-  retries: 100
-  delay: 10 
+  retries: "{{ raidCommonSet.syncChkRetries | default(20) }}"
+  delay:   "{{ raidCommonSet.syncChkDelay | default(300) }}"
 
 # grepの結果をignore_errorsしているが、
 # タイムアウトもignoreされてしまうためチェックする。
