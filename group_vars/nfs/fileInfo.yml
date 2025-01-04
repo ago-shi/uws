@@ -10,6 +10,11 @@ certification:
     src: "group_files/all"
     dest: "/etc/pki/ca-trust/source/anchors"
 
+mdadmFiles:
+  - file: "mdadm.conf"
+    path: "/etc"
+
+
 # chronyService:
 # -> group_vars/nfs/systemd.yml
 

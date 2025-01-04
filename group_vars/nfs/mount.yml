@@ -1,0 +1,9 @@
+---
+mountPoint:
+  raid1:
+  # check -> group_vars/nfs/directory.yml
+  - path:   "/mnt/md0"
+    src:    "/dev/md0"
+    fstype: "xfs"
+    opts:   "defaults,nofail"
+    state:  "present"

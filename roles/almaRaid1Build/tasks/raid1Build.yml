@@ -1,0 +1,97 @@
+---
+# raid構成を確認する
+- name: cat /proc/mdstat
+  ansible.builtin.command: cat /proc/mdstat
+  register: catMdstat
+  changed_when: false
+
+- name: Split lines into lists
+  ansible.builtin.set_fact:
+    split_lines: "{{ catMdstat.stdout_lines | map('split', ' ') | list }}"
+
+- name: check raid configure exist. (raid device)
+  ansible.builtin.set_fact:
+    raidExist: true
+  when: item.0.name | basename == item.1[0]
+  loop: "{{ raidConf4Build | product(split_lines) }}"
+
+- name: check raid configure exist. (partition)
+  ansible.builtin.shell:
+    cmd: cat /proc/mdstat | grep "{{ item.1.name | basename }}\["
+  loop: "{{ raidConf4Build | subelements('partition') }}"
+  register: raidPartExist
+  ignore_errors: true
+  changed_when: false
+
+- name: if raid device or partition exists, failed
+  ansible.builtin.fail:
+    msg: "raid device or partition is already exist."
+  when: >-
+    (not raidPartExist.failed is defined | default(false)) or 
+    (raidExist is defined)
+
+# raidを構成する。
+- name: create mdadm command set (raid partitions)
+  ansible.builtin.set_fact:
+    raidList: >- 
+      {{ raidList | default([]) + [[item.name, item.partition | length,
+       'raid' + item.level | string, 
+       item.partition | map(attribute='name') | join(' ')]] }}
+  loop: "{{ raidConf4Build }}"
+
+  ## ex.[[/dev/md0, 2, raid1, /dev/sda1 /dev/sdb1], [/dev/md1, 2, raid1, /dev/sda2 /dev/sdb2]]
+  ## mdadm --create /dev/md0 --raid-devices=2 --level=raid1 /dev/sda1 /dev/sdb1
+- name: create mdadm command set (raid device)
+  ansible.builtin.shell:
+    cmd: echo -e "y\n" | mdadm --create {{ item.0 }} --raid-devices={{ item.1 }} --level={{ item.2 }} {{ item.3 }}
+  loop: "{{ raidList }}"
+
+- name: check resync status
+  ansible.builtin.shell:
+    cmd: "cat /proc/mdstat | grep ']  resync ='"
+  register: resyncStatus
+  changed_when: false
+  ignore_errors: true
+  until: resyncStatus.rc != 0
+  retries: "{{ raidCommonSet.syncChkRetries | default(20) }}"
+  delay:   "{{ raidCommonSet.syncChkDelay | default(300) }}"
+
+# grepの結果をignore_errorsしているが、
+# タイムアウトもignoreされてしまうためチェックする。
+- name: timeout check
+  ansible.builtin.fail:
+    msg: "resync is taking too long"
+  when: resyncStatus.rc == 0
+
+# raidデバイスをフォーマットする
+- name: format raid device
+  ansible.builtin.command:
+    cmd: mkfs -t {{ item.format }} {{ item.name }}
+  loop: "{{ raidConf4Build }}"
+
+# raid設定を保存する
+# /etc/mdadm.confへ設定を保存すると、raidデバイス名が変わらない。
+- name: make mdadm.conf
+  ansible.builtin.file:
+    path: "{{ mdadmFiles.0.path }}/{{ mdadmFiles.0.file }}"
+    state: touch
+    owner: "{{ mdadmFiles.0.owner | default(defaultFileSet.owner) }}"
+    group: "{{ mdadmFiles.0.group | default(defaultFileSet.group) }}"
+    mode:  "{{ mdadmFiles.0.mode | default(defaultFileSet.mode) }}"
+    modification_time: preserve
+    access_time: preserve
+
+- name: get mdadm detail scan info.
+  ansible.builtin.command: 
+    cmd: mdadm --detail --scan {{ item.name }}
+  register: raidDetailScan
+  loop: "{{ raidConf4Build }}"
+  changed_when: false
+
+- name: raid configure saved -> mdadm.conf
+  ansible.builtin.lineinfile:
+    path: "{{ mdadmFiles.0.path }}/{{ mdadmFiles.0.file }}"
+    regexp: "^{{ item.stdout }}$"
+    line: "{{ item.stdout }}"
+  when: item.stdout | length > 0
+  loop: "{{ raidDetailScan.results }}"

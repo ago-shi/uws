@@ -1,0 +1,26 @@
+---
+# raid用partitionが存在しないことを確認する。存在していたらエラー終了。
+- name: get disk partition info.
+  ansible.builtin.shell: 
+    cmd: lsblk -l -o NAME | grep {{ item.1.name | basename}}
+  ignore_errors: true
+  changed_when: false
+  loop: "{{ raidConf4Build | subelements('partition') }}"
+  register: partInfo
+
+  ## partitionが存在していたらエラー終了 ##
+- name: if partition exists, failed
+  ansible.builtin.fail:
+    msg: "partition already exists."
+  when: not partInfo.failed is defined
+
+# partitionが存在しないので、partitionを作成する
+- name: create disk partition.
+  community.general.parted:
+    device: "{{ item.1.device }}"
+    number: "{{ item.1.name | regex_replace(item.1.device, '') | int }}"
+    state: present
+    part_end: "{{ item.1.size | default('100%') }}"
+    flags: [ raid ]
+  loop: "{{ raidConf4Build | subelements('partition') }}"
+

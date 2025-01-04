@@ -1,0 +1,12 @@
+---
+defDir:
+  state: "directory"
+  owner: "root"
+  group: "root"
+  mode:  "0755"
+
+directories:
+  mnt:
+  # /mnt/md0 -> see group_vars/nfs/mount.yml
+  - name: "/mnt/md0"
+  

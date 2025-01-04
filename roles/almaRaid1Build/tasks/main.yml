@@ -1,0 +1,58 @@
+---
+# if you do not execute almaBasicSetup task, you remove this commentout
+# - name: install dnf pakeages
+#   ansible.builtin.import_tasks: roles/almaBasicSetup/tasks/dnf.yml
+
+- name: include disk partition create tasks
+  ansible.builtin.include_tasks: diskPartitionCreate.yml
+  when: >-
+    (partBuildReq | default(false)) and 
+    (raidConf4Build is defined | default(false))
+
+- name: include raid1 build tasks
+  ansible.builtin.include_tasks: raid1Build.yml
+  when: >-
+    (raid1BuildReq | default(false)) and 
+    (raidConf4Build is defined | default(false))
+
+# raid構成を確認する
+- name: raid configre check. (cat /proc/mdstat)
+  ansible.builtin.command: cat /proc/mdstat
+  register: catMdstat
+  changed_when: false
+
+- name: raid configre check. (split lines)
+  ansible.builtin.set_fact:
+    split_lines: "{{ catMdstat.stdout_lines | map('split', ' ') | list }}"
+
+- name: raid configre check. (check)
+  ansible.builtin.set_fact:
+    raidExistFlg: true
+  when: item.0.src | basename == item.1.0
+  loop: "{{ mountPoint.raid1 | product(split_lines) }}"
+
+- name: raid configure check. (exist = playbook failed)
+  ansible.builtin.fail:
+    msg: "raid devices are not exist.(expect: exist)"
+  when: not raidExistFlg is defined
+
+# raidデバイスマウント用ディレクトリの作成
+- name: create directory for raid device mount
+  ansible.builtin.file:
+    path:  "{{ item.name }}"
+    state: "{{ item.state | default(defDir.state) }}"
+    owner: "{{ item.owner | default(defDir.owner) }}"
+    group: "{{ item.group | default(defDir.group) }}"
+    mode:  "{{ item.mode  | default(defDir.mode) }}"
+  loop: "{{ directories.mnt }}"
+
+# raidデバイスのマウント
+- name: mount raid devices
+  ansible.posix.mount:
+    path:   "{{ item.path }}"
+    src:    "{{ item.src }}"
+    fstype: "{{ item.fstype }}"
+    state:  "{{ item.state }}"
+    opts:   "{{ item.opts }}"
+  loop: "{{ mountPoint.raid1 }}"
+
