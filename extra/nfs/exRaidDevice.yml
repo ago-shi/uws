@@ -4,9 +4,7 @@ raid1BuildReq: true
 
 raidConf4Build:
   - name: /dev/md0
-    size: 2GiB
-    partTypeHex: fd
-    partTypeName: linux_raid_member
+    size: 100%
     level: 1
     format: xfs
     partition:
@@ -16,8 +14,6 @@ raidConf4Build:
         name:   /dev/sdc1
 #  - name: md1
 #    size: 2GiB
-#    partTypeHex: fd
-#    partTypeName: linux_raid_member
 #    level: 1
 #    format: xfs
 #    partition:
