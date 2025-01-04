@@ -34,8 +34,8 @@
 # 時刻同期
 - name: configure Chrony
   ansible.builtin.template:
-    src: "{{ chronyService.src | default(defaultFileSet.src) }}/{{ chronyService.configFile }}.j2"
-    dest: "{{ chronyService.configPath }}/{{ chronyService.configFile }}"
+    src: "{{ chronyService.src | default(defaultFileSet.src) }}{{ chronyService.configFile }}.j2"
+    dest: "{{ chronyService.configPath }}{{ chronyService.configFile }}"
     owner: "{{ chronyService.owner | default(defaultFileSet.owner) }}"
     group: "{{ chronyService.group | default(defaultFileSet.group) }}"
     mode: "{{ chronyService.mode | default(defaultFileSet.mode) }}"
@@ -51,8 +51,8 @@
 # firewallの設定
 - name: configure zone file
   ansible.builtin.copy:
-    src: "{{ firewalld.src | default(systemdDefault.src) }}/{{ item.srcFile }}"
-    dest: "{{ firewalld.destZoneDir }}/{{ item.destFile }}"
+    src: "{{ firewalld.src | default(systemdDefault.src) }}{{ item.srcFile }}"
+    dest: "{{ firewalld.destZoneDir }}{{ item.destFile }}"
     owner: "{{ firewalld.item.owner | default(defaultFileSet.owner) }}"
     group: "{{ firewalld.item.group | default(defaultFileSet.group) }}"
     mode: "{{ firewalld.item.mode | default(defaultFileSet.mode) }}"

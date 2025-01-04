@@ -9,4 +9,13 @@
     <port protocol="tcp" port="22"/>
     <accept/>
   </rule>
+
+  <!-- nfs接続元の制限 -->
+{% for host in groups['u6sWorkers'] %}
+  <rule family="ipv4">
+    <source address="{{ hostvars[host]['ansible_host'] }}"/>
+    <port protocol="tcp" port="2049"/>
+    <accept/>
+  </rule>
+{% endfor %}
 </zone>

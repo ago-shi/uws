@@ -73,11 +73,11 @@
 # /etc/mdadm.confへ設定を保存すると、raidデバイス名が変わらない。
 - name: make mdadm.conf
   ansible.builtin.file:
-    path: "{{ mdadmFiles.0.path }}/{{ mdadmFiles.0.file }}"
+    path: "{{ mdadmFiles.path }}{{ mdadmFiles.file }}"
     state: touch
-    owner: "{{ mdadmFiles.0.owner | default(defaultFileSet.owner) }}"
-    group: "{{ mdadmFiles.0.group | default(defaultFileSet.group) }}"
-    mode:  "{{ mdadmFiles.0.mode | default(defaultFileSet.mode) }}"
+    owner: "{{ mdadmFiles.owner | default(defaultFileSet.owner) }}"
+    group: "{{ mdadmFiles.group | default(defaultFileSet.group) }}"
+    mode:  "{{ mdadmFiles.mode | default(defaultFileSet.mode) }}"
     modification_time: preserve
     access_time: preserve
 
@@ -90,7 +90,7 @@
 
 - name: raid configure saved -> mdadm.conf
   ansible.builtin.lineinfile:
-    path: "{{ mdadmFiles.0.path }}/{{ mdadmFiles.0.file }}"
+    path: "{{ mdadmFiles.path }}{{ mdadmFiles.file }}"
     regexp: "^{{ item.stdout }}$"
     line: "{{ item.stdout }}"
   when: item.stdout | length > 0

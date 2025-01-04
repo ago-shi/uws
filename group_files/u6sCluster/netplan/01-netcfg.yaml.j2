@@ -11,6 +11,6 @@ network:
       nameservers:
         addresses: 
           - {{ hostvars['dns01']['ansible_host'] }}
-        search: [uws.lan]
+        search: [{{ myDomain }}]
       dhcp6: false
   version: 2

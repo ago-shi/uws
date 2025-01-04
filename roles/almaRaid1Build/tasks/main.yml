@@ -44,7 +44,7 @@
     owner: "{{ item.owner | default(defDir.owner) }}"
     group: "{{ item.group | default(defDir.group) }}"
     mode:  "{{ item.mode  | default(defDir.mode) }}"
-  loop: "{{ directories.mnt }}"
+  loop: "{{ directories.raid }}"
 
 # raidデバイスのマウント
 - name: mount raid devices
