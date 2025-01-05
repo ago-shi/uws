@@ -1,0 +1,17 @@
+---
+mountDef:
+  opts:  "defaults"
+  state: "present"
+
+mountPoint:
+  k8s:
+    src: "/swap.img"
+    path: none
+    state: absent
+  nfs:
+  - path: "/mnt/nfs01"
+    src:  "/mnt/md0/u6sCluster"
+    fstype: "nfs" 
+    opts: "defaults,nofail"
+    state: "present"
+    

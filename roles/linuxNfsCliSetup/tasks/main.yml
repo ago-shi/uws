@@ -1,0 +1,30 @@
+---
+# ubuntu->apt install -y nfs-common
+# almalinux->dnf install -y nfs-utils
+
+# if you do not execute package install task, you remove this commentout
+## if almalinux 
+# - name: install dnf packages
+#   ansible.builtin.import_tasks: roles/almaBasicSetup/tasks/dnf.yml
+## if ubuntu
+# - name: install apt packages
+#   ansible.builtin.import_tasks: roles/ubuntuBasicSetup/tasks/apt.yml
+
+# nfsデバイスマウント用ディレクトリの作成
+- name: create directory for nfs device mount
+  ansible.builtin.file:
+    path:  "{{ item.name }}"
+    state: "{{ item.state | default(defDir.state) }}"
+    owner: "{{ item.owner | default(defDir.owner) }}"
+    group: "{{ item.group | default(defDir.group) }}"
+    mode:  "{{ item.mode  | default(defDir.mode) }}"
+  loop: "{{ directories.nfsShare }}"
+
+- name: mount nfs devices
+  ansible.posix.mount:
+    path: "{{ item.path }}"
+    src:  "{{ item.src }}"
+    fstype: "{{ item.fstype | defaults(mountDef) }}"
+    opts:   "{{ item.opts | defaults(mountDef) }}"
+    state:  "{{ item.present | default(mountDef)}}"
+  loop: "{{ mountPoint.nfs }}"

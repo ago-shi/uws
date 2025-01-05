@@ -1,6 +1,6 @@
 ---
 # if you do not execute almaBasicSetup task, you remove this commentout
-# - name: install dnf pakeages
+# - name: install dnf packages
 #   ansible.builtin.import_tasks: roles/almaBasicSetup/tasks/dnf.yml
 
 - name: include disk partition create tasks

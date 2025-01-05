@@ -50,7 +50,7 @@
 
 # firewallの設定
 - name: configure zone file
-  ansible.builtin.copy:
+  ansible.builtin.template:
     src: "{{ firewalld.src | default(systemdDefault.src) }}{{ item.srcFile }}"
     dest: "{{ firewalld.destZoneDir }}{{ item.destFile }}"
     owner: "{{ firewalld.item.owner | default(defaultFileSet.owner) }}"
