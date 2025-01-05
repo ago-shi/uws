@@ -1,1 +1,3 @@
-{{ nfsShare.0.name }} u6sWorker*(rw,no_root_squash)
+{% for host in groups['u6sWorkers'] %}
+{{ nfsShare.0.name }} {{ host }}(rw,root_squash)
+{% endfor %}
