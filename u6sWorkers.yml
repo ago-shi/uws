@@ -1,0 +1,8 @@
+---
+- name: Deploy kubernetes worker function for u6s
+  hosts: u6sWorkers
+  become: true
+  roles:
+    - role: linuxNfsCliSetup
+      tags: linuxNfsCliSetup
+      
