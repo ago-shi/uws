@@ -13,5 +13,5 @@ directories:
 
   # nfs共有領域
   nfsShare:
-  - name: "/mnt/md0/u6sCluster"
+  - name: "/mnt/md0/u6sMasters"
     mode: "0777"

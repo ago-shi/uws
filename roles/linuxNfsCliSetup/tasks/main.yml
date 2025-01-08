@@ -10,15 +10,15 @@
 # - name: install apt packages
 #   ansible.builtin.import_tasks: roles/ubuntuBasicSetup/tasks/apt.yml
 
-# nfsデバイスマウント用ディレクトリの作成
-- name: create directory for nfs device mount
+# nfsマウントポイント用ディレクトリの作成
+- name: create directory for nfs mount point
   ansible.builtin.file:
     path:  "{{ item.name }}"
     state: "{{ item.state | default(defDir.state) }}"
     owner: "{{ item.owner | default(defDir.owner) }}"
     group: "{{ item.group | default(defDir.group) }}"
     mode:  "{{ item.mode  | default(defDir.mode) }}"
-  loop: "{{ directories.nfsShare }}"
+  loop: "{{ directories.nfsMntPt }}"
 
 - name: mount nfs devices
   ansible.posix.mount:
@@ -28,3 +28,15 @@
     opts:   "{{ item.opts | defaults(mountDef) }}"
     state:  "{{ item.present | default(mountDef)}}"
   loop: "{{ mountPoint.nfs }}"
+
+# nfsデータ共有用ディレクトリの作成
+# セキュリティ上、ユーザ単位にデータ領域を作成する目的
+- name: create directory for nfs data sharing
+  ansible.builtin.file:
+    path:  "{{ item.name }}"
+    state: "{{ item.state | default(defDir.state) }}"
+    owner: "{{ item.owner | default(defDir.owner) }}"
+    group: "{{ item.group | default(defDir.group) }}"
+    mode:  "{{ item.mode  | default(defDir.mode) }}"
+  loop: "{{ directories.nfsData }}"
+  

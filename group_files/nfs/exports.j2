@@ -1,3 +1,4 @@
-{% for host in groups['u6sWorkers'] %}
-{{ directories.nfsShare.0.name }} {{ host }}(rw,root_squash)
+{% for host in groups['u6sCluster'] %}
+{{ directories.nfsShare.0.name }} {{ host }}(rw,sync,no_subtree_check,insecure,root_squash)
 {% endfor %}
+

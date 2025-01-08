@@ -1,6 +1,16 @@
 ---
+mountDef:
+  opts:  "defaults"
+  state: "mounted"
+
 mountPoint:
   k8s:
     src: "/swap.img"
     path: none
     state: absent
+  nfs:
+  - path:   "/mnt/nfs01"
+    src:    "nfs01.uws.lan:/mnt/md0/u6sCluster"
+    fstype: "nfs" 
+    opts:   "defaults,nofail"
+    state:  "mounted"
