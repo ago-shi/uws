@@ -37,6 +37,8 @@ aptPackages:
     addrepo: true
   - name: vault
     state: present
+  - name: nfs-common
+    state: present
 
 aptPackageDefault:
   state: present

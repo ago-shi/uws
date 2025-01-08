@@ -24,9 +24,9 @@
   ansible.posix.mount:
     path: "{{ item.path }}"
     src:  "{{ item.src }}"
-    fstype: "{{ item.fstype | defaults(mountDef) }}"
-    opts:   "{{ item.opts | defaults(mountDef) }}"
-    state:  "{{ item.present | default(mountDef)}}"
+    fstype: "{{ item.fstype | default(mountDef) }}"
+    opts:   "{{ item.opts | default(mountDef) }}"
+    state:  "{{ item.state | default(mountDef)}}"
   loop: "{{ mountPoint.nfs }}"
 
 # nfsデータ共有用ディレクトリの作成
@@ -38,5 +38,5 @@
     owner: "{{ item.owner | default(defDir.owner) }}"
     group: "{{ item.group | default(defDir.group) }}"
     mode:  "{{ item.mode  | default(defDir.mode) }}"
+  become_user: "{{ item.owner }}"
   loop: "{{ directories.nfsData }}"
-  

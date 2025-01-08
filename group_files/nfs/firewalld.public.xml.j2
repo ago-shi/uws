@@ -11,7 +11,7 @@
   </rule>
 
   <!-- nfs接続元の制限 -->
-{% for host in groups['u6sWorkers'] %}
+{% for host in groups['u6sCluster'] %}
   <rule family="ipv4">
     <source address="{{ hostvars[host]['ansible_host'] }}"/>
     <port protocol="tcp" port="2049"/>

@@ -17,4 +17,3 @@ directories:
     owner: "kubeope"
     group: "kubeope"
     mode:  "0700"
-

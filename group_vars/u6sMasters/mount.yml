@@ -10,7 +10,7 @@ mountPoint:
     state: absent
   nfs:
   - path:   "/mnt/nfs01"
-    src:    "nfs01.uws.lan:/mnt/md0/u6sCluster"
+    src:    "nfs01.uws.lan:/mnt/md0/u6sMasters"
     fstype: "nfs" 
     opts:   "defaults,nofail"
     state:  "mounted"
