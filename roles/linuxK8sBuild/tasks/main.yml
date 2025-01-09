@@ -47,10 +47,13 @@
 # 代表ノードで実行
 - name: kubectl get nodes
   ansible.builtin.command: kubectl get nodes --namespace default
-  register: k8sNodeList
   when: inventory_hostname == k8s.master.repNode
   changed_when: false
   become_user: "{{ k8s.master.kubectlUser }}"
+  until: k8sNodeList.rc == 0
+  retries: 30
+  dely: 10
+  register: k8sNodeList
 
 - name: Convert k8sNodeList.stdout_lines to 2D array
   ansible.builtin.set_fact:
