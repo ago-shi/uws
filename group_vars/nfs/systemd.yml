@@ -2,23 +2,26 @@
 systemdDefault:
   state: started
   enabled: true
-  src: "group_files/nfs"
+  src: "group_files/nfs/"
 
 chronyService:
   serviceName: chrony
   state: started
   enabled: true
-  src: "group_files/nfs"
-  configPath: "/etc"
+  configPath: "/etc/"
   configFile: "chrony.conf"
 
 firewalld:
   serviceName: firewalld
   state: started
   enabled: true
-  destConfigDir: "/etc/firewalld"
   configFile: "firewalld.conf"
-  destZoneDir: "/etc/firewalld/zones"
+  destZoneDir: "/etc/firewalld/zones/"
   zoneFiles:
-    - srcFile: "firewalld.public.xml"
+    - srcFile: "firewalld.public.xml.j2"
       destFile: "public.xml"
+
+nfsServer:
+  serviceName: nfs-server
+  state: started
+  enabled: true

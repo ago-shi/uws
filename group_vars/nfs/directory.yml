@@ -6,7 +6,12 @@ defDir:
   mode:  "0755"
 
 directories:
-  mnt:
+  # raidデバイス
+  raid:
   # /mnt/md0 -> see group_vars/nfs/mount.yml
   - name: "/mnt/md0"
-  
+
+  # nfs共有領域
+  nfsShare:
+  - name: "/mnt/md0/u6sMasters"
+    mode: "0777"

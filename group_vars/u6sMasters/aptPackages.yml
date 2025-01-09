@@ -37,6 +37,8 @@ aptPackages:
     addrepo: true
   - name: vault
     state: present
+  - name: nfs-common
+    state: present
 
 aptPackageDefault:
   state: present
@@ -46,7 +48,7 @@ aptPackageDefault:
 
 aptKey:
   - name: kubeadm/kubectl/kubelet
-    downloadURL: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/"
+    downloadURL: "https://pkgs.k8s.io/core:/stable:/v1.32/deb/"
     downloadKey: "Release.key"
     ascFile: "kubernetes-apt-keyring.asc"
     gpgFile: "kubernetes-apt-keyring.gpg"

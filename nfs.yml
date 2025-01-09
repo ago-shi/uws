@@ -7,3 +7,5 @@
       tags: almaBasicSetup
     - role: almaRaid1Build
       tags: almaRaid1Build
+    - role: almaNfsSetup
+      tags: almaNfsSetup

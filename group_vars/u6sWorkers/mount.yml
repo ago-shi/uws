@@ -1,6 +1,12 @@
 ---
+mountDef:
+  opts:  "defaults"
+  state: "present"
+
 mountPoint:
   k8s:
     src: "/swap.img"
     path: none
     state: absent
+
+    

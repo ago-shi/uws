@@ -1,0 +1,19 @@
+---
+defDir:
+  state: "directory"
+  owner: "root"
+  group: "root"
+  mode:  "0755"
+
+directories:
+  # nfs mount point
+  nfsMntPt:
+  - name: "/mnt/nfs01"
+    mode: "0777"
+
+  # nfs directory for data
+  nfsData:
+  - name: "/mnt/nfs01/u6sMasters"
+    owner: "kubeope"
+    group: "kubeope"
+    mode:  "0700"

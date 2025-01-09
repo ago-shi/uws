@@ -1,6 +1,6 @@
 ---
 defaultFileSet:
-  src: "group_files/nfs"
+  src: "group_files/nfs/"
   owner: "root"
   group: "root"
   mode: '0644'
@@ -11,9 +11,18 @@ certification:
     dest: "/etc/pki/ca-trust/source/anchors"
 
 mdadmFiles:
-  - file: "mdadm.conf"
-    path: "/etc"
+  file: "mdadm.conf"
+  path: "/etc/"
 
+# nfs idmapd.conf
+idmapdConf:
+  file: "idmapd.conf"
+  dest: "/etc/"
+
+# nfs exports
+exports:
+  file: "exports"
+  dest: "/etc/"
 
 # chronyService:
 # -> group_vars/nfs/systemd.yml

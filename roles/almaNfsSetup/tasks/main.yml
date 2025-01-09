@@ -1,0 +1,47 @@
+---
+# if almaBasicsetup role is not executed, then execute this import_task module.
+# - name: dnf package managed
+#   ansible.builtin.import_tasks: roles/almaBasicSetup/tasks/main.yml
+
+# idmapd.confの設定
+- name: configure idmapd.conf
+  ansible.builtin.template:
+    src:   "{{ idmapdConf.src | default(defaultFileSet.src) }}{{ idmapdConf.file }}.j2"
+    dest:  "{{ idmapdConf.dest }}{{ idmapdConf.file }}"
+    owner: "{{ idmapdConf.owner | default(defaultFileSet.owner) }}"
+    group: "{{ idmapdConf.group | default(defaultFileSet.group) }}"
+    mode:  "{{ idmapdConf.mode  | default(defaultFileSet.mode) }}"
+
+# nfs共有用ディレクトリの作成
+- name: create directory for raid device mount
+  ansible.builtin.file:
+    path:  "{{ item.name }}"
+    state: "{{ item.state | default(defDir.state) }}"
+    owner: "{{ item.owner | default(defDir.owner) }}"
+    group: "{{ item.group | default(defDir.group) }}"
+    mode:  "{{ item.mode  | default(defDir.mode) }}"
+  loop: "{{ directories.nfsShare }}"
+
+# exportsの設定
+- name: configure exports
+  ansible.builtin.template:
+    src:   "{{ exports.src | default(defaultFileSet.src) }}{{ exports.file }}.j2"
+    dest:  "{{ exports.dest }}{{ exports.file }}"
+    owner: "{{ exports.owner | default(defaultFileSet.owner) }}"
+    group: "{{ exports.group | default(defaultFileSet.group) }}"
+    mode:  "{{ exports.mode  | default(defaultFileSet.mode) }}"
+  register: exportsUpdate
+
+- name: start nfs server
+  ansible.builtin.systemd:
+    name:    "{{ nfsServer.serviceName }}"
+    state:   "{{ nfsServer.state | default(systemdDefault.state) }}"
+    enabled: "{{ nfsServer.enabled | default(systemdDefault.enabled) }}"
+  register: nfsServerStart
+
+- name: restart nfs server
+  ansible.builtin.systemd:
+    name:    "{{ nfsServer.serviceName }}"
+    state:   restarted
+    enabled: "{{ nfsServer.enabled | default(systemdDefault.enabled) }}"
+  when: exportsUpdate.changed and not nfsServerStart.changed
