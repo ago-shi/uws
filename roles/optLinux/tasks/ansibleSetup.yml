@@ -18,6 +18,6 @@
     state: present
 
 - name: add authorized_key
-  ansible.posix.autorized_key:
+  ansible.posix.authorized_key:
     user: ansible
-    key:  lookup('file', '/home/ansible/.ssh/id_rsa.pub')
+    key: "{{ lookup('file', '/home/ansible/.ssh/id_rsa.pub') }}"

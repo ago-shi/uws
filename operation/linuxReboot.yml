@@ -1,0 +1,11 @@
+---
+### rebootを実行するだけ。
+### 注意：停止前の作法があるノードでは実行しないこと。
+
+- name: linux reboot
+  hosts: nfs
+  become: true
+  vars:
+    lnxReboot: true
+  roles:
+  - role: optLinux

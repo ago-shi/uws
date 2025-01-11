@@ -5,5 +5,8 @@
 
 - name: ansible set up
   hosts: u6sCluster
+  become: true
+  vars:
+    iniSetup: true
   roles:
   - role: optLinux
