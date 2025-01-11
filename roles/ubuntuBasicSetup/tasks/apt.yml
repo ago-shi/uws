@@ -60,6 +60,12 @@
     mode: "{{ item.mode | default(aptRepoDefault.mode) }}"
   loop: "{{ aptRepo }}"
 
+- name: Update apt cache ans apt upgrade
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: full
+    purge: true
+
 - name: apt package managed
   ansible.builtin.apt:
     name: "{{ item.name }}"

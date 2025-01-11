@@ -8,23 +8,19 @@
   changed_when: false
   when: k8s.master.nodeGrp in group_names
 
-- name: Get Cilium CLI stable version
-  ansible.builtin.uri:
-    url: "{{ k8s.cni.cilium.CLI.latestVer }}"
-    return_content: true
-  register: ciliumCli
-  when: ciliumChk.rc != 0
-  run_once: true
-
-- name: apply cilium-cli version at all master node
-  ansible.builtin.set_fact:
-    ciliumCliVer: "{{ ciliumCli.content }}"
-  when: ciliumChk.rc != 0
-  run_once: true
-
 - name: Install cilium-cli
   when: ((ciliumChk.rc | default(0)) != 0) and (k8s.master.nodeGrp in group_names)
   block:
+    - name: Get Cilium CLI stable version
+      ansible.builtin.uri:
+        url: "{{ k8s.cni.cilium.CLI.latestVer }}"
+        return_content: true
+      register: ciliumCli
+
+    - name: apply cilium-cli version at all master node
+      ansible.builtin.set_fact:
+        ciliumCliVer: "{{ ciliumCli.content }}"
+
     - name: Set fact cpu architecture
       ansible.builtin.set_fact:
         cpuArch: >

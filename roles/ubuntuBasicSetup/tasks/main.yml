@@ -24,12 +24,6 @@
   community.general.timezone:
     name: "{{ datetime_timezone }}"
 
-- name: Update apt cache ans apt upgrade
-  ansible.builtin.apt:
-    update_cache: true
-    upgrade: full
-    purge: true
-
 - name: install packages
   ansible.builtin.import_tasks: apt.yml
 

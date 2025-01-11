@@ -37,7 +37,7 @@ aptPackageDefault:
 
 aptKey:
   - name: kubeadm/kubelet
-    downloadURL: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/"
+    downloadURL: "https://pkgs.k8s.io/core:/stable:/v1.32/deb/"
     downloadKey: "Release.key"
     ascFile: "kubernetes-apt-keyring.asc"
     gpgFile: "kubernetes-apt-keyring.gpg"
