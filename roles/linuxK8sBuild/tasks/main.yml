@@ -52,7 +52,7 @@
   become_user: "{{ k8s.master.kubectlUser }}"
   until: k8sNodeList.rc == 0
   retries: 30
-  dely: 10
+  delay: 10
   register: k8sNodeList
 
 - name: Convert k8sNodeList.stdout_lines to 2D array
@@ -158,4 +158,3 @@
 # if ubuntu_k8s_setup task does not execute, you need to remove commentout.
 # - name: install ca certification
 #   ansible.builtin.import_task: roles/ubuntuBasicSetup/tasks/caCert.yml
-
