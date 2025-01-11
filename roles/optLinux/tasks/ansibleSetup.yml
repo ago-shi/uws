@@ -1,0 +1,23 @@
+---
+### ansibleを利用するためのセットアップ
+### このroleを実行しないと他のroleは使えない。
+### taskサマリ
+### 1. ansibleユーザの作成
+### 2. 公開鍵の登録
+### 注意：passwordはextra_varで実行時に指定すること。
+
+- name: add ansible user
+  ansible.builtin.user:
+    name: ansible
+    password: "{{ initialPasswd | password_hash('sha512') }}"
+    groups: >-
+      {%- if   ansible_os_family == 'RedHat' -%} wheel
+      {%- elif ansible_os_family == 'Debian' -%} sudo
+      {%- else -%}                               unknown
+      {%- endif -%}
+    state: present
+
+- name: add authorized_key
+  ansible.posix.autorized_key:
+    user: ansible
+    key:  lookup('file', '/home/ansible/.ssh/id_rsa.pub')
