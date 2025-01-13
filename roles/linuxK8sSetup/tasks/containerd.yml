@@ -12,7 +12,7 @@
   ansible.builtin.shell: | 
     containerd config default | sudo tee /tmp/{{ containerdService.configFile }} && 
     sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /tmp/{{ containerdService.configFile }} && 
-    sudo sed -i 's#sandbox_image = "registry.k8s.io/pause:3.6"#sandbox_image = "registry.k8s.io/pause:3.9"#g' /tmp/{{ containerdService.configFile }}
+    sudo sed -i 's#sandbox_image = "registry.k8s.io/pause:.*"#sandbox_image = "registry.k8s.io/pause:{{ containerdService.pauseVer }}"#g' /tmp/{{ containerdService.configFile }}
   changed_when: false
 
 - name: Replace {{ containerdService.configFile }}
