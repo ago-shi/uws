@@ -4,6 +4,10 @@
     file: kubeadmInit.yml
 
 # ここにkube-vip(daemon-set)インストールタスクを追加
+- name: install kube-vip
+  ansible.builtin.import_tasks:
+    file: kube-vip.yml
+  when: inventory_hostname == k8s.master.repNode
 
 #- name: exec kubernetes cluster join(controle plane and worker)
 #  ansible.builtin.import_tasks:
