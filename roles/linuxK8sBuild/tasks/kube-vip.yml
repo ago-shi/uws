@@ -21,21 +21,38 @@
 
 - name: create kube-vip command
   ansible.builtin.set_fact:
-    kube-vip: "{{ k8s.kubeVip.imagePull }}{{ kubeVipVer.stdout }}; {{ k8s.kubeVip.cnRun }}{{ kubeVipVer.stdout }} vip /kube-vip"
+    kubeVip: "{{ k8s.kubeVip.imagePull }}{{ kubeVipVer.stdout }}; sudo {{ k8s.kubeVip.cnRun }}{{ kubeVipVer.stdout }} vip /kube-vip"
 
-- name: create kube-vip manifest file
-  ansible.builtin.shell:
-    cmd: >-
-      {{ kube-vip }} manifest daemonset 
-       --interface {{ ansible_default_ipv4.interface }} 
-       --address {{ k8s.network.ipaddr }} 
-       --inCluster 
-       --taint 
-       --controlplane 
-       --services 
-       --arp 
-       --leaderElection 
-       > /tmp/{{ k8sFile.kubeVIP.file }}
+- name: create kube-vip manifest file (/tmp/)
+  ansible.builtin.shell: >-
+    {{ kubeVip }} manifest daemonset 
+    --interface {{ ansible_default_ipv4.interface }} 
+    --address {{ k8s.network.ipaddr }} 
+    --inCluster 
+    --taint 
+    --controlplane 
+    --services 
+    --arp 
+    --leaderElection 
+    > /tmp/{{ k8sFile.kubeVIP.file }}
   changed_when: false
 
+- name: replace kube-vip manifest file ({{ directories.k8s.0.name }})
+  ansible.builtin.shell: |-
+    if [ ! -f {{ directories.k8s.0.name }}{{ k8sFile.kubeVIP.file }} ] || ! cmp -s /tmp/{{ k8sFile.kubeVIP.file }} {{ directories.k8s.0.name }}{{ k8sFile.kubeVIP.file }}; then
+      cp /tmp/{{ k8sFile.kubeVIP.file }} {{ directories.k8s.0.name }}{{ k8sFile.kubeVIP.file }}
+      echo {{ k8sFile.kubeVIP.file }} is replaced.
+    fi
+  register: copyResult
+  changed_when: copyResult.stdout != ''
 
+- name: Remove /tmp/{{ k8sFile.kubeVIP.file }}
+  ansible.builtin.file:
+    name: /tmp/{{ k8sFile.kubeVIP.file }}
+    state: absent
+  changed_when: false
+
+- name: kubectl apply -f {{ k8sFile.kubeVIP.file }}
+  ansible.builtin.command: kubectl apply -f {{ directories.k8s.0.name }}{{ k8sFile.kubeVIP.file }}
+  when: copyResult.stdout != ''
+  

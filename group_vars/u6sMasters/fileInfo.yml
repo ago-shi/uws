@@ -51,7 +51,7 @@ certification:
 k8sFile:
   kubeVIP:
     file: "kube-vip-daemon.yaml"
-    dest: "/etc/kubernetes/manifests/"
+    # dest: "/home/kubeope/manifests" -> group_vars/u6sMasters/directory.yml 
     owner: "kubeope"
     group: "kubeope"
     mode: '0600'

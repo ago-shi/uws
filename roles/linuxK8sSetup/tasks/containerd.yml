@@ -19,7 +19,7 @@
   ansible.builtin.shell: |
     if [ ! -f {{ containerdService.configPath }}{{ containerdService.configFile }} ] || ! cmp -s /tmp/{{ containerdService.configFile }} {{ containerdService.configPath }}{{ containerdService.configFile }}; then
       cp /tmp/{{ containerdService.configFile }} {{ containerdService.configPath }}{{ containerdService.configFile }}
-      echo {{ containerdService.configFile}} is replaced.
+      echo {{ containerdService.configFile }} is replaced.
     fi
   register: confCopyResult
   changed_when: confCopyResult.stdout != ''

@@ -8,6 +8,15 @@
     group: "{{ etcHosts.group }}"
     mode: "{{ etcHosts.mode }}"
 
+- name: make directory for k8s operation
+  ansible.builtin.file:
+    path:  "{{ item.name }}"
+    state: "{{ item.state | default(defDir.state) }}"
+    owner: "{{ item.owner | default(defDir.owner) }}"
+    group: "{{ item.group | default(defDir.group) }}"
+    mode:  "{{ item.mode  | default(defDir.mode) }}"
+  loop: "{{ directories.k8s }}"
+
 # kubernetesクラスタビルドtargetフラグ　allノードで検証->statモジュール
 - name: Build target node search
   ansible.builtin.stat:
