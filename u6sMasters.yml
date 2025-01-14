@@ -1,5 +1,5 @@
 ---
-- name: Deploy kubernetes worker function for u6s
+- name: Deploy kubernetes master function for u6s
   hosts: u6sMasters
   become: true
   roles:

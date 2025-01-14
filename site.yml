@@ -1,6 +1,7 @@
 ---
-# nfs.yml -> u6sWorkers.ymlの順番は必須。
+# nfs.yml -> u6sMasters.ymlの順番は必須。
 # u6s-clusterの外部ストレージがnfsのため。
 - import_playbook: nfs.yml
+- import_playbook: u6sMasters.yml
 - import_playbook: u6s-cluster.yml
-- import_playbook: u6sWorkers.yml
+

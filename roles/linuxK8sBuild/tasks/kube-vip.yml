@@ -13,3 +13,29 @@
   changed_when: true
   when: not (' unchanged' in kubectlRst.stdout) 
 
+- name: get latest kube-vip version
+  ansible.builtin.shell:
+    cmd: "curl -sL {{ k8s.kubeVip.URL }} | jq -r '.[0].name'"
+  changed_when: false
+  register: kubeVipVer
+
+- name: create kube-vip command
+  ansible.builtin.set_fact:
+    kube-vip: "{{ k8s.kubeVip.imagePull }}{{ kubeVipVer.stdout }}; {{ k8s.kubeVip.cnRun }}{{ kubeVipVer.stdout }} vip /kube-vip"
+
+- name: create kube-vip manifest file
+  ansible.builtin.shell:
+    cmd: >-
+      {{ kube-vip }} manifest daemonset 
+       --interface {{ ansible_default_ipv4.interface }} 
+       --address {{ k8s.network.ipaddr }} 
+       --inCluster 
+       --taint 
+       --controlplane 
+       --services 
+       --arp 
+       --leaderElection 
+       > /tmp/{{ k8sFile.kubeVIP.file }}
+  changed_when: false
+
+
