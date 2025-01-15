@@ -3,20 +3,18 @@
   ansible.builtin.import_tasks:
     file: kubeadmInit.yml
 
-# ここにkube-vip(daemon-set)インストールタスクを追加
 - name: install kube-vip
   ansible.builtin.import_tasks:
     file: kube-vip.yml
   when: inventory_hostname == k8s.master.repNode
 
-#- name: exec kubernetes cluster join(controle plane and worker)
-#  ansible.builtin.import_tasks:
-#    file: k8sJoin.yml
+- name: exec kubernetes cluster join(controle plane and worker)
+  ansible.builtin.import_tasks:
+    file: k8sJoin.yml
 
-# 任意のCNIを利用できるようにCNIインストールはtaskを切り出し。
-#- name: install CNI (CNI=cilium)
-#  ansible.builtin.import_tasks: 
-#    file: cilium.yml
+- name: install CNI (CNI=cilium)
+  ansible.builtin.import_tasks: 
+    file: cilium.yml
 
 # if ubuntu_k8s_setup task does not execute, you need to remove commentout.
 # - name: install ca certification

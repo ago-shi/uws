@@ -15,6 +15,7 @@
     owner: "{{ item.owner | default(defDir.owner) }}"
     group: "{{ item.group | default(defDir.group) }}"
     mode:  "{{ item.mode  | default(defDir.mode) }}"
+  when: inventory_hostname in groups[k8s.master.nodeGrp]
   loop: "{{ directories.k8s }}"
 
 # kubernetesクラスタビルドtargetフラグ　allノードで検証->statモジュール

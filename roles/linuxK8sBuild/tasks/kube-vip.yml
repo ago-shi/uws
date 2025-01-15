@@ -55,4 +55,4 @@
 - name: kubectl apply -f {{ k8sFile.kubeVIP.file }}
   ansible.builtin.command: kubectl apply -f {{ directories.k8s.0.name }}{{ k8sFile.kubeVIP.file }}
   when: copyResult.stdout != ''
-  
+  become_user: "{{ k8s.master.kubectlUser }}"
