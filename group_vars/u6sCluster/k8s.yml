@@ -11,6 +11,7 @@ k8s:
   network:
     vhost: u6s-master
     ipaddr: "192.168.1.50"
+    tmpIpaddr: "192.168.1.40"
     port: '6443'
     cidr: "10.1.0.0/16"
   kubeVip:
