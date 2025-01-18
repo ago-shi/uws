@@ -50,11 +50,10 @@ certification:
 
 k8sFile:
   kubeVIP:
-    file: "kube-vip.yaml"
-    src: "group_files/u6sMasters/"
-    dest: "/etc/kubernetes/manifests/"
-    owner: "root"
-    group: "root"
+    file: "kube-vip-daemon.yaml"
+    # dest: "/home/kubeope/manifests" -> group_vars/u6sMasters/directory.yml 
+    owner: "kubeope"
+    group: "kubeope"
     mode: '0600'
   adminConf:
     src: null # 自動生成

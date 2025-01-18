@@ -1,0 +1,58 @@
+---
+- name: apply kube-vip rbac no.1
+  ansible.builtin.command:
+    cmd: kubectl apply -f https://kube-vip.io/manifests/rbac.yaml
+  become: true
+  become_user: "{{ linuxUsers.0.name }}"
+  changed_when: false
+  register: kubectlRst
+
+- name: check changed / unchanged rbac
+  ansible.builtin.debug:
+    msg: "kube-vip rbac is changed."
+  changed_when: true
+  when: not (' unchanged' in kubectlRst.stdout) 
+
+- name: get latest kube-vip version
+  ansible.builtin.shell:
+    cmd: "curl -sL {{ k8s.kubeVip.URL }} | jq -r '.[0].name'"
+  changed_when: false
+  register: kubeVipVer
+
+- name: create kube-vip command
+  ansible.builtin.set_fact:
+    kubeVip: "{{ k8s.kubeVip.imagePull }}{{ kubeVipVer.stdout }}; sudo {{ k8s.kubeVip.cnRun }}{{ kubeVipVer.stdout }} vip /kube-vip"
+
+- name: create kube-vip manifest file (/tmp/)
+  ansible.builtin.shell: >-
+    {{ kubeVip }} manifest daemonset 
+    --interface {{ ansible_default_ipv4.interface }} 
+    --address {{ k8s.network.ipaddr }} 
+    --inCluster 
+    --taint 
+    --controlplane 
+    --services 
+    --arp 
+    --leaderElection 
+    > /tmp/{{ k8sFile.kubeVIP.file }}
+  changed_when: false
+
+- name: replace kube-vip manifest file ({{ directories.k8s.0.name }})
+  ansible.builtin.shell: |-
+    if [ ! -f {{ directories.k8s.0.name }}{{ k8sFile.kubeVIP.file }} ] || ! cmp -s /tmp/{{ k8sFile.kubeVIP.file }} {{ directories.k8s.0.name }}{{ k8sFile.kubeVIP.file }}; then
+      cp /tmp/{{ k8sFile.kubeVIP.file }} {{ directories.k8s.0.name }}{{ k8sFile.kubeVIP.file }}
+      echo {{ k8sFile.kubeVIP.file }} is replaced.
+    fi
+  register: copyResult
+  changed_when: copyResult.stdout != ''
+
+- name: Remove /tmp/{{ k8sFile.kubeVIP.file }}
+  ansible.builtin.file:
+    name: /tmp/{{ k8sFile.kubeVIP.file }}
+    state: absent
+  changed_when: false
+
+- name: kubectl apply -f {{ k8sFile.kubeVIP.file }}
+  ansible.builtin.command: kubectl apply -f {{ directories.k8s.0.name }}{{ k8sFile.kubeVIP.file }}
+  when: copyResult.stdout != ''
+  become_user: "{{ k8s.master.kubectlUser }}"

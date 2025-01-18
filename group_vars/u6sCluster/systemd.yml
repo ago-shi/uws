@@ -5,6 +5,7 @@ containerdService:
   enabled: true
   configPath: "/etc/containerd/"
   configFile: "config.toml"
+  pauseVer: "3.10"
 
 chronyService:
   serviceName: chrony.service

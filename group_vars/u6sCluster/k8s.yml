@@ -5,13 +5,19 @@ k8s:
   master:
     nodeGrp: u6sMasters
     repNode: u6s-master01 # kubeadm init実行ノード
-    kubectlUser: ansible
+    kubectlUser: kubeope
   worker:
     nodeGrp: u6sWorkers
   network:
     vhost: u6s-master
+    ipaddr: "192.168.1.50"
+    tmpIpaddr: "192.168.1.40"
     port: '6443'
     cidr: "10.1.0.0/16"
+  kubeVip:
+    URL: "https://api.github.com/repos/kube-vip/kube-vip/releases"
+    imagePull: "ctr image pull ghcr.io/kube-vip/kube-vip:"
+    cnRun: "ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:"
   cni:
     cilium: 
       CLI:

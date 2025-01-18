@@ -1,0 +1,4 @@
+---
+- name: ansible setup
+  ansible.builtin.import_tasks: ansibleSetup.yml
+  when: iniSetup | default(false)

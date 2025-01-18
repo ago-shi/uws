@@ -39,6 +39,8 @@ aptPackages:
     state: present
   - name: nfs-common
     state: present
+  - name: jq
+    state: present
 
 aptPackageDefault:
   state: present

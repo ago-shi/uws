@@ -17,3 +17,9 @@ directories:
     owner: "kubeope"
     group: "kubeope"
     mode:  "0700"
+
+  k8s:
+  - name: "/home/kubeope/manifests/"
+    owner: "kubeope"
+    group: "kubeope"
+    mode:  "0700"

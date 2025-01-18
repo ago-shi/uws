@@ -1,0 +1,12 @@
+---
+### ansibleを利用するためのセットアップ
+### このroleを実行しないと他のroleは使えない。
+### 注意：passwordはextra_varで実行時に指定すること。
+
+- name: ansible set up
+  hosts: u6sCluster
+  become: true
+  vars:
+    iniSetup: true
+  roles:
+  - role: optLinux

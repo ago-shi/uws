@@ -1,0 +1,45 @@
+---    
+# allノードで実行
+- name: configure {{ etcHosts.dest }}{{ etcHosts.file }}
+  ansible.builtin.template:
+    src: "{{ etcHosts.src }}{{ etcHosts.file }}.j2"
+    dest: "{{ etcHosts.dest }}{{ etcHosts.file }}"
+    owner: "{{ etcHosts.owner }}"
+    group: "{{ etcHosts.group }}"
+    mode: "{{ etcHosts.mode }}"
+
+- name: make directory for k8s operation
+  ansible.builtin.file:
+    path:  "{{ item.name }}"
+    state: "{{ item.state | default(defDir.state) }}"
+    owner: "{{ item.owner | default(defDir.owner) }}"
+    group: "{{ item.group | default(defDir.group) }}"
+    mode:  "{{ item.mode  | default(defDir.mode) }}"
+  when: inventory_hostname in groups[k8s.master.nodeGrp]
+  loop: "{{ directories.k8s }}"
+
+# kubernetesクラスタビルドtargetフラグ　allノードで検証->statモジュール
+- name: Build target node search
+  ansible.builtin.stat:
+    path: "{{ k8sFile.adminConf.dest }}"
+  register: k8sBuilded
+
+# 代表マスターノードで実行
+- name: Initialize Kubernetes master (represent master node only)
+  ansible.builtin.command:
+    cmd: >
+      kubeadm init 
+      --control-plane-endpoint {{ k8s.network.vhost }}
+      --pod-network-cidr={{ k8s.network.cidr }} 
+      --upload-certs
+  when: (inventory_hostname == k8s.master.repNode) and (not k8sBuilded.stat.exists)
+
+# if ubuntu_k8s_setup task does not execute, you need to remove commentout.
+# - name: Add k8s operation User
+#   ansible.builtin.import_tasks: roles/ubuntuBasicSetup/tasks/user.yml
+#   when vars['k8s.master.nodeGrp'] in group_names
+
+# 代表ノードだけ先にkubectl権限を設定
+- name: kubectl setup
+  ansible.builtin.import_tasks: kubectl.yml
+  when: inventory_hostname == k8s.master.repNode
