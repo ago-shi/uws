@@ -13,7 +13,7 @@ directories:
 
   # nfs directory for data
   nfsData:
-  - name: "/mnt/nfs01/u6sMasters"
+  - name:  "/mnt/nfs01/u6sMasters"
     owner: "kubeope"
     group: "kubeope"
     mode:  "0700"
