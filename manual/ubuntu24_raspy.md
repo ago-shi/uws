@@ -65,10 +65,13 @@ Is the information correct? [Y/n] y
 $sudo usermod -G sudo ansible
 ```
 
-以下はJASサーバから実行する。
-
+以下はansibleサーバから実行する。
 ```ssh_pubkey
+# ansibleサーバへansible用ユーザでログインする。
+
+# (過去にssh設定している場合)known_hostsから既存のhost keyを削除する
+$ ssh-keygen -R <host name or FQDN or IP address>
+
 # ssh公開鍵を配布する
-$su - ansible
-$ssh-copy-id -o StrictHostKeyChecking=no -i /home/ansible/.ssh/id_rsa.pub 192.168.1.XX
+$ssh-copy-id -o StrictHostKeyChecking=no -i /home/ansible/.ssh/id_rsa.pub <host name or FQDN or IP address>
 ```
