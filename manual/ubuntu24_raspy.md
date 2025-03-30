@@ -6,37 +6,42 @@ raspberry pi Imager for Windowsから以下をインストール。
 
 ubuntu 24.04 LTS (Noble Numbat)
 
-### 固定IPアドレス設定
+### /etc/fstab設定
 
-初期はDHCPが有効なため、固定IPアドレスを設定しておく。　　
-
-```netplan
-$sudo mv /etc/netplan/50-cloud-init.yaml /etc/netplan/50-cloud-init.yaml.org
-$vi /etc/netplan/01-netcfg.yaml
-network:
-  ethernets:
-    # ネットワークインターフェース名
-    eth0:
-      dhcp4: false
-      # IP アドレス/サブネットマスク
-      addresses: [XX.XX.XX.XX/XX]
-      # デフォルトゲートウェイ
-      # [metric] : 優先度を設定 (複数の NIC 搭載の場合に指定)
-      # 値が低い方が優先度高
-      routes:
-        - to: default
-          via: 192.168.1.1
-          metric: 100
-      nameservers:
-        # 参照するネームサーバー
-        addresses: [192.168.1.87]
-        # DNS サーチベース
-        search: [uws.lan]
-      dhcp6: false
-  version: 2
-
-$sudo chmod 600 /etc/netplan/01-netcfg.yaml
-$sudo netplan --debug apply
+SDカード延命のため、logやtmp領域はtmpfsを使うように設定する。  
+/etc/fstabに以下を追記する。  
+```/etc/fstab
+tmpfs   /tmp    tmpfs   defaults,size=16m,noatime,mode=1777    0       0
+tmpfs   /var/tmp        tmpfs   defaults,size=16m,noatime,mode=1777     0       0
+tmpfs   /var/log        tmpfs   defaults,size=512m,noatime,mode=0755     0       0
+```
+ディスク下の領域を削除してrebootする。
+/tmpを削除すると固まるという情報があったため、/tmpは最後に削除してrebootを実行している。
+```
+sudo rm -rf /var/tmp && sudo rm -rf /var/log
+sudo rm -rf /tmp && sudo reboot
+```
+/var/log領域の逼迫を防ぐため、logrotation設定を変更しておく。
+```/etc/logrotate.d/rsyslog
+/var/log/syslog
+/var/log/mail.log
+/var/log/kern.log
+/var/log/auth.log
+/var/log/user.log
+/var/log/cron.log
+{
+        rotate 2      # 4から2へ変更
+        weekly
+        maxsize 96MB  # 上限サイズ定義を追加
+        missingok
+        notifempty
+        compress
+        delaycompress
+        sharedscripts
+        postrotate
+                /usr/lib/rsyslog/rsyslog-rotate
+        endscript
+}
 ```
 
 ### ホスト名設定
