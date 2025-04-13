@@ -32,7 +32,7 @@ sudo rm -rf /tmp && sudo reboot
 {
         rotate 2      # 4から2へ変更
         weekly
-        maxsize 96MB  # 上限サイズ定義を追加
+        maxsize 96M  # 上限サイズ定義を追加
         missingok
         notifempty
         compress
