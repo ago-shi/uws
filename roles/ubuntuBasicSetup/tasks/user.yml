@@ -2,9 +2,9 @@
 - name: Add new user
   ansible.builtin.user:
     name: "{{ item.name }}"
-    password: "{{ item.password }}"
+    password: "{{ item.password | default(defaultLinuxUsers.password) }}"
     state: "{{ item.state }}"
-    create_home: "{{  item.create_home | default(defaultLinuxUsers.create_home) }}"
-    shell: "{{  item.shell | default(defaultLinuxUsers.shell) }}"
+    create_home: "{{ item.create_home | default(defaultLinuxUsers.create_home) }}"
+    shell: "{{ item.shell | default(defaultLinuxUsers.shell) }}"
     update_password: "{{  item.update_password | default(defaultLinuxUsers.update_password) }}"
   loop: "{{ linuxUsers }}"

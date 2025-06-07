@@ -1,0 +1,47 @@
+---
+all:
+  children:
+    u6sCluster:
+      children:
+        u6sMasters:
+          hosts:
+            u6s-master01:
+              ansible_host: 192.168.1.40
+            u6s-master02:
+              ansible_host: 192.168.1.39
+            u6s-master03:
+              ansible_host: 192.168.1.38
+          vars:
+            ansible_become_password: >
+              {{ lookup('community.hashi_vault.hashi_vault', 
+              'secret=kv2/u6sMasters/data/ansible:password') }}
+        u6sWorkers:
+          hosts:
+            u6s-worker01:
+              ansible_host: 192.168.1.93
+            u6s-worker02:
+              ansible_host: 192.168.1.96
+            u6s-worker03:
+              ansible_host: 192.168.1.143
+          vars:
+            ansible_become_password: >
+              {{ lookup('community.hashi_vault.hashi_vault', 
+              'secret=kv2/u6sWorkers/data/ansible:password') }}
+
+    dns:
+      hosts:
+        dns01:
+          ansible_host: 192.168.1.87
+    nfs:
+      hosts:
+        nfs01:
+          ansible_host: 192.168.1.109
+    nfsClient:
+      children:
+        u6sMasters:
+  # 以下はplaybook設定用のノード定義。
+  # これらのノードにansilbe-playbook実行はできない。
+    router:
+      hosts:
+        router01:
+          ansible_host: 192.168.1.1

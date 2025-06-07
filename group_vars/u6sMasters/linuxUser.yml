@@ -2,6 +2,9 @@
 defaultLinuxUsers:
   create_home: yes
   shell: /bin/bash
+  password: >
+    {{ lookup('community.hashi_vault.hashi_vault', 
+    'secret=kv2/u6sMasters/data/everyone:password') }}
   update_password: on_create
   auth:
     kubectl: false
@@ -9,12 +12,10 @@ defaultLinuxUsers:
 
 linuxUsers:
   - name: kubeope
-    password: "{{ 'P@ssw0rd' | password_hash('sha512') }}"
     state: present
     auth:
       kubectl: true
   - name: ansible
-    password: "{{ 'P@ssw0rd' | password_hash('sha512') }}"
     state: present
     auth:
       kubectl: true
