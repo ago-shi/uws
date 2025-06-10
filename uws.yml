@@ -36,6 +36,10 @@ all:
       hosts:
         nfs01:
           ansible_host: 192.168.1.109
+      vars:
+        ansible_become_password: >
+          {{ lookup('community.hashi_vault.hashi_vault', 
+          'secret=kv2/nfs/data/ansible:password') }}
     nfsClient:
       children:
         u6sMasters:
