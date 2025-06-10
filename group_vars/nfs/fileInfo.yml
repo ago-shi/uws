@@ -6,7 +6,7 @@ defaultFileSet:
   mode: '0644'
 
 certification:
-  - file: pki_root_ca.crt
+  - file: "root-2025.crt"
     src: "group_files/all"
     dest: "/etc/pki/ca-trust/source/anchors"
 
