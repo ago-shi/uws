@@ -16,10 +16,10 @@ directories:
   ## manifest保存用、masterノードのみ利用。
   - name:  "/mnt/md0/u6sMasters"
     owner: "1002"   # u6sMasters -> kubeope
-    group: "1005"   # u6sMAsters -> kubeope
-    mode:  "0700"
+    group: "1005"   # u6sMasters -> kubeope
+    mode:  "0777"
   ## containerログ等の保管用、masterノード、workerノード両方で利用。
   - name: "/mnt/md0/u6sCluster"
     owner: "nobody"
     group: "nobody"
-    mode: "0700"
+    mode: "0777"

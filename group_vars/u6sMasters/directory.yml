@@ -16,7 +16,7 @@ directories:
   - name:  "/mnt/nfs01/u6sMasters"
     owner: "kubeope"
     group: "kubeope"
-    mode:  "0700"
+    mode:  "0777"
 
   k8s:
   - name: "/home/kubeope/manifests/"
