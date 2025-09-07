@@ -1,0 +1,6 @@
+---
+repository_files:
+- "ceph.sources"
+- "proxmox.sources"
+- "pve-enterprise.sources"
+- "debian.sources"

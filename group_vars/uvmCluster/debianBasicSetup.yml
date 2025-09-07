@@ -1,0 +1,22 @@
+---
+timezone: "Asia/Tokyo"
+
+account_groups:
+- name: ansible
+  gid:  10000
+  state: present
+
+accounts:
+- name: ansible
+  uid:  10000
+  group: ansible
+  groups: sudo
+  append: yes
+  create_home: yes
+  shell: "/bin/bash"
+  password: >
+    {{ lookup('community.hashi_vault.hashi_vault', 
+    'secret=kv2/proxmox01/data/user-ansible:password') 
+    | password_hash('sha512') }}
+  update_password: on_create
+  state: present

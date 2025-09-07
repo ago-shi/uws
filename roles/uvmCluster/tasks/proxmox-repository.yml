@@ -1,0 +1,13 @@
+---
+- name: congigure repository
+  ansible.builtin.template:
+    src:   "{{ group_files }}/{{ item }}.j2"
+    dest:  "/etc/apt/sources.list.d/{{ item }}"
+    owner: "root"
+    group: "root"
+    mode:  "644"
+  loop: "{{ repository_files }}"
+
+- name: repository cache update
+  ansible.builtin.apt:
+    update_cache: yes

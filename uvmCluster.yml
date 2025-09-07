@@ -1,0 +1,7 @@
+---
+- name: Deploy proxmox cluster for VM
+  hosts: uvmCluster
+  become: true
+  roles:
+    - role: uvmCluster
+      tags: uvmCluster

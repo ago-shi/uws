@@ -27,6 +27,24 @@ all:
             ansible_become_password: >
               {{ lookup('community.hashi_vault.hashi_vault', 
               'secret=kv2/u6sWorkers/data/ansible:password') }}
+    uvmCluster:
+      hosts:
+        proxmox01:
+          ansible_host: 192.168.1.162
+          ansible_become_password: >
+            {{ lookup('community.hashi_vault.hashi_vault', 
+            'secret=kv2/proxmox01/data/user-ansible:password') }}
+    uwsInfraVault:
+      children:
+        vault:
+          hosts:
+            hashi-vault01:
+            hashi-vault02:
+    uwsInfraDns:
+      children:
+        dnsSrvs:
+          hosts:
+            core-dns01:
 
     dns:
       hosts:

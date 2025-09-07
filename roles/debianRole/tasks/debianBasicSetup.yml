@@ -1,0 +1,48 @@
+---
+- name: hostname setup name->"{{ inventory_hostname }}"
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: timezone setup to "{{ timezone }}"
+  community.general.timezone:
+    name: "{{ timezone }}"
+
+- name: Update apt cache and apt upgrade
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: full
+    purge: true
+
+- name: Create user groups
+  ansible.builtin.group:
+    name: "{{ item.name }}"
+    gid:  "{{ item.gid }}"
+    state: "{{ item.state }}"
+  loop: "{{ account_groups }}"
+
+- name: Create user
+  ansible.builtin.user:
+    name:   "{{ item.name }}"
+    group:  "{{ item.group }}"
+    groups: "{{ item.groups }}"
+    append: "{{ item.append }}"
+    create_home: "{{ item.create_home }}"
+    shell:  "{{ item.shell }}"
+    password: "{{ item.password }}"
+    update_password: "{{ item.update_password }}"
+    state:  "{{ item.state }}"
+  loop: "{{ accounts }}"
+
+- name: network config -> disable ipv6
+  ansible.builtin.template:
+    src:  "{{ group_files }}/sysctl.conf.j2"
+    dest: "/etc/sysctl.conf"
+    owner: root
+    group: root
+    mode: "644"
+  register: sysctlUpdate
+
+- name: kernel update
+  ansible.builtin.command:
+    cmd: "sysctl -p"
+  when: sysctlUpdate.changed

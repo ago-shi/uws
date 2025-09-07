@@ -1,0 +1,3 @@
+---
+- ansible.builtin.import_tasks: ../../debianRole/tasks/debianBasicSetup.yml
+- ansible.builtin.import_tasks: proxmox-repository.yml
